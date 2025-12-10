@@ -1,0 +1,493 @@
+Create a Doodle Classifier web application following these exact specifications:
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1: PROJECT OVERVIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+Build a full-screen, exhibition-grade interactive application for AI doodle classification.
+
+DUAL-SCREEN SETUP:
+- Desktop screen: Shows results, predictions, overlays (spectator view)
+- Tablet screen: Drawing canvas only (participant view)
+- Connection: Same web app, different views based on URL parameter (?mode=tablet or ?mode=desktop)
+
+CURRENT PHASE: Build with MOCK predictions (model integration comes later)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2: DESIGN SYSTEM (Match Transformer App Aesthetic)
+═══════════════════════════════════════════════════════════════════════════════
+
+DESIGN PHILOSOPHY:
+- Exhibition-grade: Large text, dramatic animations, high contrast
+- Museum interactive display aesthetic
+- Full-screen immersive experience
+- Every element serves the narrative: "Watching AI see"
+
+TYPOGRAPHY:
+- Primary Font: "Inter" (weights: 900, 700, 500, 400)
+- Monospace: "JetBrains Mono" (weights: 500, 400) for technical elements
+- Hierarchy:
+  * Main prediction: text-6xl md:text-8xl font-black
+  * Confidence percentage: text-5xl md:text-7xl font-bold font-mono
+  * Alternative predictions: text-2xl md:text-3xl font-medium
+  * Instructions/labels: text-sm font-medium uppercase tracking-wider
+  * Drawing prompts: text-2xl md:text-3xl font-medium
+- All text sizes 20% larger than standard web (exhibition viewing distance)
+
+COLOR SYSTEM:
+- Background: Particle-based animation with light gradient
+  * Base: Soft white to pale blue gradient (from #FAFBFC to #F0F4F8)
+  * Particles: Subtle floating dots/circles, soft shadows, gentle movement
+  * Inspiration: Subtle, calming, not distracting from content
+- Primary accent: #3B82F6 (blue) for interactive elements
+- Text: High contrast - use gray-900 for primary, gray-600 for secondary
+- Success/prediction: Emerald green (#10B981)
+- Confidence bars: Gradient from primary accent to lighter shade
+
+SPACING:
+- Primitives: 2, 4, 6, 8, 12, 16, 24 (Tailwind units)
+- Component padding: 6, 8
+- Section spacing: 12, 16, 24
+- Always use h-screen with flex flex-col for full viewport
+
+ANIMATIONS:
+- Token/prediction entrance: opacity 0→1 + translateY(8px)→0 (duration-300)
+- Confidence bars: width 0%→X% (duration-700, ease-out, stagger by 75ms each)
+- Button interactions: hover:opacity-90, scale(1.02) on focus
+- Drawing strokes: Smooth, no lag
+- Results appearing: Fade-in over 0.3s
+- Training example overlays: Cross-fade rotation every 2s (opacity transition)
+- Slower, more dramatic than typical web (700-1000ms vs 300ms)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 3: HOME PAGE (Desktop View)
+═══════════════════════════════════════════════════════════════════════════════
+
+LAYOUT:
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│            AI Image Classification Station                  │
+│                    (text-6xl font-black)                    │
+│                                                             │
+│   ┌─────────────────────┐  ┌─────────────────────┐       │
+│   │                     │  │                     │       │
+│   │  Doodle Classifier  │  │ Digit CNN Visualizer│       │
+│   │   (hover: scale)    │  │   (coming soon)     │       │
+│   │                     │  │                     │       │
+│   └─────────────────────┘  └─────────────────────┘       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+COMPONENTS:
+- Two large cards with shadow-lg, rounded-2xl, hover effects
+- Cards: min-h-64, p-12, flex flex-col items-center justify-center
+- Icon or illustration for each (can be simple SVG)
+- Smooth transition on hover (transform: scale(1.05), duration-300)
+- Background: Particle animation with gradient as described
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 4: DRAWING INTERFACE (Tablet View - ?mode=tablet)
+═══════════════════════════════════════════════════════════════════════════════
+
+FULL-SCREEN CANVAS:
+┌─────────────────────────────────────────────────────────────┐
+│  "Draw any object - cat, tree, house, car..."              │
+│  (text-2xl, top center, p-6)                                │
+│                                                             │
+│                                                             │
+│                  [DRAWING CANVAS]                           │
+│                                                             │
+│                  (white background)                         │
+│                  (black strokes, 3px width)                 │
+│                                                             │
+│                                                             │
+│                                                             │
+│  [Clear] (bottom-left)    [Done] (bottom-right)            │
+└─────────────────────────────────────────────────────────────┘
+
+CANVAS TECHNICAL SPECS:
+- HTML5 Canvas element
+- Stroke color: black (#000000)
+- Stroke width: 3px
+- Background: white (#FFFFFF)
+- Capture touch/mouse events for smooth drawing
+- On "Done": 
+  * Convert canvas to 28×28 grayscale numpy array
+  * Normalize pixel values to 0-1 range
+  * Send as base64-encoded PNG via WebSocket
+  * Immediately show "Processing..." overlay
+  
+BUTTONS:
+- Clear: px-8 py-4, rounded-xl, border-2, hover effect
+- Done: px-12 py-4, rounded-xl, bg-blue-600 text-white, prominent
+- Both buttons: text-lg font-medium
+- Min touch target: 44×44px
+
+DRAWING QUALITY:
+- Smooth strokes (no jagged lines)
+- Responsive to fast/slow drawing
+- No lag or delay
+- Handle both touch and mouse input
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 5: RESULTS DISPLAY (Desktop View - After Drawing Submitted)
+═══════════════════════════════════════════════════════════════════════════════
+
+LAYOUT:
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│              "The AI thinks you drew..."                    │
+│                  (text-3xl, py-8)                           │
+│                                                             │
+│   ┌─────────────────────────────────────────────┐         │
+│   │                                             │         │
+│   │         [User's Drawing - Center]           │         │
+│   │              (280×280px)                    │         │
+│   │                                             │         │
+│   │   [Training example overlays with opacity]  │         │
+│   │   (3 examples, rotating fade every 2s)      │         │
+│   │                                             │         │
+│   └─────────────────────────────────────────────┘         │
+│                                                             │
+│                    CAT                                      │
+│              (text-8xl font-black)                          │
+│                    87%                                      │
+│         (text-7xl font-bold font-mono)                      │
+│                                                             │
+│   Alternative Predictions:                                  │
+│   ┌──────────────────────────────────────────┐            │
+│   │ Dog      ████████░░░░░░░░░░░░   8%      │            │
+│   │ Tiger    ███░░░░░░░░░░░░░░░░░   3%      │            │
+│   │ Face     ██░░░░░░░░░░░░░░░░░░   2%      │            │
+│   └──────────────────────────────────────────┘            │
+│                                                             │
+│              [Draw Again] (bottom center)                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+MAIN PREDICTION:
+- Class name: Centered, text-8xl, font-black, text-gray-900
+- Confidence: Below name, text-7xl, font-mono, text-emerald-600
+- Smooth fade-in entrance (duration-500)
+
+DRAWING OVERLAY SECTION:
+- User's drawing: Center, 280×280px, sharp rendering
+- Training examples: 3 images overlaid with opacity-30
+- Examples rotate: Fade out → Fade in new image (every 2 seconds)
+- Smooth cross-fade transition (duration-500)
+- All in a max-w-md container, centered
+
+ALTERNATIVE PREDICTIONS:
+- Show top 3 alternatives (after main prediction)
+- Each row: 
+  * Class name (left, text-2xl, font-medium, w-32)
+  * Animated bar (flex-1, h-12, rounded-lg, bg-gradient)
+  * Percentage (right, text-2xl, font-mono, w-20)
+- Bars animate from 0→target width (duration-700, stagger 75ms)
+- Container: max-w-2xl, mx-auto, space-y-4
+
+DRAW AGAIN BUTTON:
+- Large: px-16 py-6, text-xl
+- Rounded-2xl, shadow-lg
+- Hover: scale(1.05)
+- Resets to drawing canvas (on tablet) and prompts new drawing
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 6: MOCK MODEL & BACKEND
+═══════════════════════════════════════════════════════════════════════════════
+
+CLASSES (30 total - most commonly drawn objects):
+['cat', 'dog', 'bird', 'fish', 'tree', 'flower', 'house', 'car', 'bicycle', 'airplane', 
+ 'boat', 'umbrella', 'cup', 'chair', 'table', 'book', 'clock', 'computer', 'phone', 'apple',
+ 'banana', 'sun', 'moon', 'star', 'cloud', 'mountain', 'face', 'eye', 'hand', 'heart']
+
+MOCK PREDICTION LOGIC:
+```python
+def mock_predict(drawing_array):
+    """
+    TODO: Replace with real CNN model inference
+    Current: Returns random predictions for testing
+    
+    Args:
+        drawing_array: 28x28 numpy array (normalized 0-1)
+    
+    Returns:
+        {
+            'predictions': [
+                {'class': 'cat', 'confidence': 0.87},
+                {'class': 'dog', 'confidence': 0.08},
+                {'class': 'bird', 'confidence': 0.03},
+                {'class': 'fish', 'confidence': 0.02}
+            ],
+            'training_examples': {
+                'cat': ['url1', 'url2', 'url3'],
+                'dog': ['url1', 'url2', 'url3'],
+                'bird': ['url1', 'url2', 'url3'],
+                'fish': ['url1', 'url2', 'url3']
+            }
+        }
+    """
+    import random
+    
+    # Randomly select 4 classes
+    selected_classes = random.sample(CLASSES, 4)
+    
+    # Generate realistic probabilities
+    probs = [random.uniform(0.60, 0.90)]  # Top prediction
+    probs.append(random.uniform(0.05, 0.25))
+    probs.append(random.uniform(0.02, 0.10))
+    probs.append(1.0 - sum(probs))  # Remaining probability
+    
+    predictions = [
+        {'class': cls, 'confidence': prob}
+        for cls, prob in zip(selected_classes, probs)
+    ]
+    
+    # Generate placeholder training examples (colored rectangles)
+    training_examples = {}
+    for pred in predictions:
+        cls = pred['class']
+        # Create 3 placeholder images (base64 or simple colored divs)
+        training_examples[cls] = [
+            f'/api/placeholder/{cls}/1',
+            f'/api/placeholder/{cls}/2',
+            f'/api/placeholder/{cls}/3'
+        ]
+    
+    return {
+        'predictions': predictions,
+        'training_examples': training_examples
+    }
+```
+
+PLACEHOLDER TRAINING IMAGES:
+- Generate simple colored rectangles with class name text
+- 280×280px, different pastel colors per class
+- Class name centered in large font
+- OR: Use placeholder.com API with custom text
+
+BACKEND STRUCTURE:
+- You choose the best stack (Flask/FastAPI/Express)
+- Must handle:
+  * WebSocket connection for real-time communication
+  * Receiving base64 drawing data
+  * Returning mock predictions
+  * Serving placeholder training images
+- Clear TODO comments where real model will be integrated
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 7: WEBSOCKET COMMUNICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+EVENTS:
+
+Tablet → Server: 'drawing_submitted'
+Payload: {
+    drawing: "base64_string_of_png",
+    timestamp: "ISO_datetime"
+}
+
+Server → Desktop: 'prediction_result'
+Payload: {
+    predictions: [
+        {class: 'cat', confidence: 0.87},
+        {class: 'dog', confidence: 0.08},
+        {class: 'bird', confidence: 0.03},
+        {class: 'fish', confidence: 0.02}
+    ],
+    training_examples: {
+        'cat': ['url1', 'url2', 'url3'],
+        'dog': ['url1', 'url2', 'url3'],
+        'bird': ['url1', 'url2', 'url3'],
+        'fish': ['url1', 'url2', 'url3']
+    },
+    user_drawing: "base64_string_of_original_drawing"
+}
+
+Desktop → Server: 'reset'
+(Triggers both screens to return to initial state)
+
+Server → Tablet: 'reset_canvas'
+(Clears canvas, shows prompt again)
+
+CONNECTION HANDLING:
+- Auto-reconnect on disconnect
+- Show "Connecting..." overlay when disconnected
+- Graceful error handling
+- Connection status indicator (subtle, corner of screen)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 8: RESPONSIVE BEHAVIOR
+═══════════════════════════════════════════════════════════════════════════════
+
+URL PARAMETERS:
+- ?mode=tablet → Shows only drawing canvas interface
+- ?mode=desktop → Shows home page, then results
+- No parameter → Auto-detect based on screen width
+  * < 768px = tablet mode
+  * >= 768px = desktop mode
+
+SCREEN SIZES:
+- Tablet: Optimize for 768×1024 (iPad standard)
+- Desktop: Optimize for 1920×1080 (typical monitor)
+- All elements scale proportionally
+- Use viewport units (vh, vw) where appropriate
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 9: PARTICLE BACKGROUND
+═══════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS:
+- Subtle animated particles (dots/circles)
+- Soft white-to-pale-blue gradient background
+- Particles float gently (slow movement)
+- Low opacity (don't distract from content)
+- Canvas-based or CSS-based (your choice for performance)
+- Inspiration: tsparticles.js or particles.js aesthetic
+- Should work smoothly on both tablet and desktop
+
+IMPLEMENTATION SUGGESTIONS:
+- Use a lightweight particle library OR
+- Custom CSS animation with absolute positioned divs OR
+- Canvas-based animation (if you can keep it performant)
+- Ensure it doesn't affect drawing canvas performance on tablet
+
+GRADIENT:
+- Top: #FAFBFC (soft white)
+- Bottom: #F0F4F8 (pale blue)
+- Smooth linear gradient
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 10: ACCESSIBILITY & POLISH
+═══════════════════════════════════════════════════════════════════════════════
+
+ACCESSIBILITY:
+- Focus visible on all interactive elements (ring-2 ring-offset-2)
+- ARIA labels for canvas, buttons, results
+- Keyboard navigation:
+  * Tab through controls
+  * Enter/Space to activate buttons
+  * Escape to reset/go back
+- High contrast text (WCAG AA minimum)
+- Touch targets minimum 44×44px
+- Screen reader announcements for state changes
+
+POLISH:
+- Smooth transitions everywhere (transition-all duration-300)
+- No sudden jumps or layout shifts
+- Loading states with subtle animations
+- Error states with clear messaging
+- Success states with micro-celebrations (subtle confetti or checkmark)
+- Idle state on desktop: Subtle ambient animation to attract attention
+
+EXHIBITION OPTIMIZATIONS:
+- All text 20% larger than standard web
+- Animations slower and more dramatic (700-1000ms)
+- High contrast for viewing from distance
+- No scrolling - everything fits in viewport
+- Works reliably for 8+ hour sessions
+- Handle network disconnections gracefully
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 11: FILE STRUCTURE & TECHNICAL STACK
+═══════════════════════════════════════════════════════════════════════════════
+
+You choose the best technical stack based on Replit's capabilities, but ensure:
+
+FRONTEND:
+- Modern framework (React/Next.js recommended for component reusability)
+- Tailwind CSS for styling (matches design system)
+- WebSocket client library
+- Canvas drawing library (or raw Canvas API)
+
+BACKEND:
+- Python (Flask/FastAPI) OR Node.js (Express)
+- WebSocket server (Flask-SocketIO or Socket.io)
+- Image processing: Pillow or Sharp
+- Mock model in separate module for easy replacement
+
+SUGGESTED STRUCTURE:
+```
+/frontend
+  /src
+    /components
+      HomePage.jsx
+      DrawingCanvas.jsx
+      ResultsDisplay.jsx
+      ParticleBackground.jsx
+    /hooks
+      useWebSocket.js
+    App.jsx
+    
+/backend
+  app.py (or server.js)
+  model.py (or model.js)
+  /utils
+    image_processing.py
+    placeholders.py
+    
+/public
+  /placeholders (generated placeholder images)
+  
+README.md (clear setup instructions)
+```
+
+DEPLOYMENT:
+- Must work with Replit's "Run" button
+- Environment variables for configuration
+- Clear documentation for running locally
+- No external dependencies that require manual setup
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 12: TESTING & VALIDATION
+═══════════════════════════════════════════════════════════════════════════════
+
+ENSURE THE APP:
+- Runs on first "Run" button click
+- Works on both tablet and desktop views simultaneously
+- Drawing is smooth and responsive
+- WebSocket communication is reliable
+- Animations are smooth (60fps target)
+- Particle background doesn't cause lag
+- Mock predictions return in <500ms
+- Training example rotation is seamless
+- All buttons work as expected
+- Reset functionality works correctly
+- Looks professional even with mock data
+
+═══════════════════════════════════════════════════════════════════════════════
+BUILD STEPS (Suggested Order)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Set up project structure with chosen stack
+2. Implement particle background + gradient
+3. Build home page (desktop view)
+4. Create drawing canvas (tablet view)
+5. Set up WebSocket communication (basic ping-pong test)
+6. Implement mock prediction backend
+7. Build results display (desktop view)
+8. Add training example overlays with rotation
+9. Implement confidence bar animations
+10. Add "Draw Again" / reset functionality
+11. Polish all animations and transitions
+12. Test dual-screen setup (open two browser windows)
+13. Add accessibility features
+14. Final polish and edge case handling
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+- This is PHASE 1: Mock predictions only
+- Real CNN model will be integrated later (clear TODOs in code)
+- Design should be impressive even with fake data
+- Focus on smooth UX and beautiful visuals
+- Exhibition-ready: Should "wow" visitors even in mock phase
+- Code should be clean and well-commented for future model integration
+
+Build this step-by-step, test each component, and create an exhibition-grade experience.
+```
+
+---
+
+**
