@@ -1,9 +1,9 @@
-# Design Guidelines: AI Doodle Classifier Exhibition Application
+# AI Doodle Classifier - Design Guidelines
 
 ## Design Philosophy
-**Exhibition-Grade Interactive Display**
-- Museum/gallery aesthetic for public viewing
-- Full-screen immersive experiences optimized for viewing distance
+**Exhibition-Grade Interactive Display - Dark Space Theme**
+- Immersive dark space aesthetic with animated star field
+- Museum/gallery quality for public viewing
 - High contrast, dramatic animations, large typography
 - Core narrative: "Watching AI see" - every element serves this story
 
@@ -13,93 +13,114 @@
 - Monospace: JetBrains Mono (weights: 500, 400) for technical elements
 
 **Hierarchy (20% larger than standard web):**
-- Main predictions: text-6xl to text-8xl, font-black
-- Confidence percentages: text-5xl to text-7xl, font-bold, font-mono
-- Alternative predictions: text-2xl to text-3xl, font-medium
-- Drawing prompts: text-2xl to text-3xl, font-medium
-- Labels/instructions: text-sm, font-medium, uppercase, tracking-wider
+- Main predictions: text-5xl to text-7xl, font-black
+- Confidence percentages: text-4xl to text-6xl, font-bold, font-mono
+- Alternative predictions: text-xl to text-2xl, font-medium
+- Drawing prompts: text-xl to text-2xl, font-semibold
+- Labels/instructions: text-xs to text-sm, font-medium, uppercase, tracking-widest
 
 ## Color Palette
-**Background:** Particle-based animated gradient
-- Base gradient: Soft white (#FAFBFC) to pale blue (#F0F4F8)
-- Floating particle dots with subtle shadows, gentle movement
-- Calming, non-distracting ambient animation
+**Background:** Dark space with animated particles
+- Base: Deep space blue (#080C18) with radial gradients
+- Stars: White with varying opacity and twinkle effects
+- Particles: Blue tones (slate-300 to blue-400) with glow effects
+
+**Text Colors:**
+- Primary: white, text-white
+- Secondary: slate-400
+- Tertiary: slate-500, slate-600
 
 **Accents:**
-- Primary: #3B82F6 (blue) for interactive elements
-- Success/predictions: #10B981 (emerald green)
-- Text: gray-900 (primary), gray-600 (secondary)
-- Confidence bars: Gradient from primary to lighter shades
-- Canvas: White (#FFFFFF) background, black (#000000) strokes (3px width)
+- Primary: Blue gradient (blue-600 to cyan-600)
+- Success/Live: Emerald (emerald-400, emerald-500) with glow
+- Interactive: Blue-400 to cyan-400
+- Confidence bars: Gradient from blue-600 via blue-500 to cyan-500
+
+**Canvas:** White (#FFFFFF) background, black (#000000) strokes (4px width)
+
+## Exhibition Header
+- Position: Fixed top-left (top-4 left-4)
+- Green flashing indicator with glow effect
+- Text: "GSV AI EXHIBITION" in monospace, uppercase, tracking-widest
+- Always visible with z-50
 
 ## Spacing System
-**Tailwind Primitives:** 2, 4, 6, 8, 12, 16, 24
-- Component padding: 6, 8
-- Section spacing: 12, 16, 24
-- Always use h-screen with flex flex-col for full viewport layouts
+**Tailwind Primitives:** 2, 3, 4, 6, 8, 10, 12, 16
+- Component padding: 4, 6, 8, 10
+- Section spacing: 8, 12, 16
+- Full viewport layouts: h-screen with flex flex-col
 
 ## Component Library
 
 **Cards (Home Page):**
-- shadow-lg, rounded-2xl
-- min-h-64, p-12
-- Hover: scale(1.05), duration-300
-- flex flex-col items-center justify-center
+- bg-slate-900/80 backdrop-blur-sm
+- border border-slate-700/50
+- rounded-2xl
+- Hover: border-blue-500/50, shadow-glow, scale-[1.02]
+- Gradient overlays on hover
 
 **Buttons:**
-- Clear: px-8 py-4, rounded-xl, border-2
-- Done/Primary: px-12 py-4, rounded-xl, bg-blue-600 text-white
-- Draw Again: px-16 py-6, text-xl, rounded-2xl, shadow-lg
-- All: text-lg font-medium minimum, 44×44px touch targets
-- Hover: opacity-90, scale(1.02)
+- Primary: bg-gradient-to-r from-blue-600 to-cyan-600
+- Rounded-xl with shadow-lg shadow-blue-500/25
+- Hover: shadow-2xl, scale-105
+- Disabled: opacity-40
+- Icon buttons: p-3 with rounded-lg
+
+**Tool Bar (Drawing Canvas):**
+- bg-slate-800/80 backdrop-blur-sm
+- border border-slate-700/50 rounded-xl
+- Active tool: bg-blue-600 with shadow-lg
+- Inactive: text-slate-400 hover:text-white
 
 **Canvas Interface:**
-- Full-screen HTML5 canvas, responsive touch/mouse
-- Top prompt: text-2xl, p-6, centered
-- Bottom controls: Clear (left), Done (right)
+- Large responsive canvas (up to 700px)
+- White background with border-4 border-slate-700/50
+- rounded-xl shadow-2xl shadow-black/50
+
+**Idle Screen (Desktop):**
+- Centered content with animated icon
+- Pulsing rings around main icon
+- Animated dots loading indicator
+- "Awaiting Input" status badge
 
 **Results Display:**
-- Drawing container: max-w-md, centered, 280×280px
-- Training overlays: opacity-30, rotating cross-fade
-- Main prediction: text-8xl font-black, centered
-- Confidence: text-7xl font-mono, emerald-600
-- Alternative predictions: max-w-2xl container, space-y-4
-- Each row: Class name (w-32, text-2xl) + animated bar (h-12, rounded-lg) + percentage (w-20, text-2xl font-mono)
+- Drawing container: w-56/w-64, centered
+- Main prediction: text-5xl to text-7xl, gradient text
+- Confidence: text-4xl to text-6xl, cyan-400, font-mono
+- Alternative predictions in bg-slate-900/50 container
 
 ## Animations
 **Timing (Exhibition-grade, slower than web):**
-- Prediction entrance: opacity 0→1 + translateY(8px)→0, 500ms
-- Confidence bars: width 0→X%, 700ms ease-out, stagger 75ms between bars
-- Training overlays: Cross-fade rotation every 2s, duration-500
-- Button hover: duration-300
-- All transitions: Smooth, dramatic, no lag
+- Fade in: 0.6s ease-out
+- Scale in: 0.5s ease-out
+- Confidence bars: 0.7s ease-out with staggered delays
+- Hover transitions: 0.3s to 0.5s
+- Particle twinkle: Continuous with varied speeds
 
-**Effects:**
-- Drawing strokes: Real-time smooth rendering
-- Results appear: Fade-in 300ms
-- Particle background: Continuous subtle floating motion
+**Custom Animations:**
+- fade-in-up: translateY(20px) to 0
+- scale-in: scale(0.9) to 1
+- float: translateY oscillation
+- Flashing indicator: opacity toggle with glow
 
-## Layout Specifications
+## Layout Patterns
+**Home Page:** Full screen centered with grid cards
+**Drawing Canvas (Tablet):** 
+- Header with prompt
+- Large centered canvas
+- Bottom toolbar with tools and submit button
+**Results Display (Desktop):**
+- Idle state: Centered waiting animation
+- Active state: Drawing preview, prediction, alternatives
 
-**Home Page:**
-- Centered title: text-6xl font-black
-- Two-card grid with equal spacing
-- Particle gradient background
-
-**Tablet Drawing (Full-screen):**
-- Top: Drawing prompt
-- Center: Maximum canvas area
-- Bottom: Clear (left) + Done (right)
-
-**Desktop Results:**
-- Top: Context text (text-3xl, py-8)
-- Center: Drawing with training overlays
-- Below: Main prediction + confidence
-- Bottom section: Alternative predictions list
-- Footer: Draw Again button
+## Connection Status
+- Position: Fixed bottom-left
+- Green dot with glow when connected
+- Red dot when disconnected
+- Text: xs, slate-500
 
 ## Images
 No hero images required. All visual content is generated from:
-- User's canvas drawings (rendered at 280×280px)
-- Training example images (fetched from backend, overlaid at opacity-30)
-- Particle animation background (programmatic)
+- User's canvas drawings (rendered at 280x280px)
+- Training example images (fetched from backend, overlaid at opacity-20)
+- Particle animation background (programmatic stars and particles)

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ParticleBackground } from "@/components/ParticleBackground";
-import { Loader2 } from "lucide-react";
+import { ExhibitionHeader } from "@/components/ExhibitionHeader";
+import { Loader2, Pencil, Eraser, Trash2, Send } from "lucide-react";
 import type { DrawingPayload } from "@shared/schema";
 
 interface DrawingCanvasProps {
@@ -9,6 +10,8 @@ interface DrawingCanvasProps {
   isConnected: boolean;
   isReconnecting: boolean;
 }
+
+type DrawingTool = "pen" | "eraser";
 
 export default function DrawingCanvas({ 
   onSubmit, 
@@ -20,22 +23,31 @@ export default function DrawingCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [currentTool, setCurrentTool] = useState<DrawingTool>("pen");
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
   const getCanvasSize = useCallback(() => {
-    if (!containerRef.current) return { width: 400, height: 400 };
-    const containerWidth = containerRef.current.clientWidth - 48;
-    const containerHeight = containerRef.current.clientHeight - 200;
-    const size = Math.min(containerWidth, containerHeight, 600);
+    if (!containerRef.current) return { width: 500, height: 500 };
+    const containerWidth = containerRef.current.clientWidth - 32;
+    const containerHeight = containerRef.current.clientHeight - 180;
+    const size = Math.min(containerWidth, containerHeight, 700);
     return { width: size, height: size };
   }, []);
 
-  const initCanvas = useCallback(() => {
+  const initCanvas = useCallback((preserveDrawing = false) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const { width, height } = getCanvasSize();
     const dpr = window.devicePixelRatio || 1;
+    
+    let imageData: ImageData | null = null;
+    if (preserveDrawing) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
+    }
     
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -49,15 +61,25 @@ export default function DrawingCanvas({
       ctx.fillRect(0, 0, width, height);
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "#000000";
+      
+      if (preserveDrawing && imageData) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = imageData.width;
+        tempCanvas.height = imageData.height;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.putImageData(imageData, 0, 0);
+          ctx.drawImage(tempCanvas, 0, 0, width, height);
+        }
+      }
     }
   }, [getCanvasSize]);
 
   useEffect(() => {
     initCanvas();
-    window.addEventListener("resize", initCanvas);
-    return () => window.removeEventListener("resize", initCanvas);
+    const handleResize = () => initCanvas(true);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [initCanvas]);
 
   const getCoordinates = (e: React.TouchEvent | React.MouseEvent) => {
@@ -87,7 +109,9 @@ export default function DrawingCanvas({
     if (!coords) return;
 
     setIsDrawing(true);
-    setHasDrawn(true);
+    if (currentTool === "pen") {
+      setHasDrawn(true);
+    }
     lastPointRef.current = coords;
 
     const ctx = canvasRef.current?.getContext("2d");
@@ -106,6 +130,16 @@ export default function DrawingCanvas({
 
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx) {
+      ctx.globalCompositeOperation = "source-over";
+      
+      if (currentTool === "eraser") {
+        ctx.lineWidth = 30;
+        ctx.strokeStyle = "#FFFFFF";
+      } else {
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#000000";
+      }
+      
       ctx.lineTo(coords.x, coords.y);
       ctx.stroke();
       ctx.beginPath();
@@ -137,7 +171,6 @@ export default function DrawingCanvas({
     const canvas = canvasRef.current;
     if (!canvas || !hasDrawn) return;
 
-    // First create a 280x280 version for display
     const displayCanvas = document.createElement("canvas");
     displayCanvas.width = 280;
     displayCanvas.height = 280;
@@ -150,7 +183,6 @@ export default function DrawingCanvas({
     displayCtx.drawImage(canvas, 0, 0, 280, 280);
     const displayImage = displayCanvas.toDataURL("image/png");
 
-    // Now create 28x28 grayscale version for model inference
     const modelCanvas = document.createElement("canvas");
     modelCanvas.width = 28;
     modelCanvas.height = 28;
@@ -158,45 +190,33 @@ export default function DrawingCanvas({
     
     if (!modelCtx) return;
     
-    // Draw white background
     modelCtx.fillStyle = "#FFFFFF";
     modelCtx.fillRect(0, 0, 28, 28);
-    
-    // Draw scaled-down image
     modelCtx.drawImage(canvas, 0, 0, 28, 28);
     
-    // Get image data and convert to grayscale normalized values
     const imageData = modelCtx.getImageData(0, 0, 28, 28);
     const grayscaleData: number[] = [];
-    let hasInvalidValue = false;
     
     for (let i = 0; i < imageData.data.length; i += 4) {
       const r = imageData.data[i];
       const g = imageData.data[i + 1];
       const b = imageData.data[i + 2];
-      // Convert to grayscale (inverted: white=0, black=1 for typical ML models)
       const gray = (r + g + b) / 3;
-      // Normalize to 0-1 range
       let normalized = 1 - (gray / 255);
       
-      // Validate the value is finite and in range
       if (!Number.isFinite(normalized) || Number.isNaN(normalized)) {
         normalized = 0;
-        hasInvalidValue = true;
       }
       
-      // Strict clamp to exactly [0, 1] with rounding to avoid floating point drift
       normalized = Math.round(Math.max(0, Math.min(1, normalized)) * 1000) / 1000;
       grayscaleData.push(normalized);
     }
 
-    // Validate array length before submitting
     if (grayscaleData.length !== 784) {
       console.error("Invalid grayscale data length:", grayscaleData.length);
       return;
     }
 
-    // Final validation: ensure all values are valid numbers in [0, 1]
     const allValid = grayscaleData.every(v => 
       Number.isFinite(v) && v >= 0 && v <= 1
     );
@@ -206,7 +226,6 @@ export default function DrawingCanvas({
       return;
     }
 
-    // Send both display image and model-ready data as structured object
     onSubmit({
       displayImage,
       modelData: grayscaleData,
@@ -216,69 +235,109 @@ export default function DrawingCanvas({
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col" ref={containerRef}>
+    <div className="relative h-screen flex flex-col overflow-hidden" ref={containerRef}>
       <ParticleBackground />
+      <ExhibitionHeader />
       
       {(isProcessing || isReconnecting) && (
-        <div className="absolute inset-0 z-50 bg-white/90 flex flex-col items-center justify-center">
-          <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-4" />
-          <p className="text-2xl font-medium text-gray-700">
-            {isReconnecting ? "Connecting..." : "AI is analyzing your drawing..."}
+        <div className="absolute inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+            <Loader2 className="w-16 h-16 text-blue-400 animate-spin relative z-10" />
+          </div>
+          <p className="mt-6 text-2xl font-medium text-slate-200">
+            {isReconnecting ? "Connecting..." : "AI is analyzing..."}
+          </p>
+          <p className="mt-2 text-slate-500">
+            {isReconnecting ? "Please wait" : "Processing your drawing"}
           </p>
         </div>
       )}
 
-      <div className="flex-none p-6 text-center">
+      <div className="flex-none pt-16 pb-4 px-4 text-center">
         <h2 
-          className="text-2xl md:text-3xl font-medium text-gray-800"
+          className="text-xl md:text-2xl font-semibold text-white"
           data-testid="text-drawing-prompt"
         >
-          Draw any object - cat, tree, house, car...
+          Draw any object
         </h2>
-        <p className="mt-2 text-sm font-medium uppercase tracking-wider text-gray-500">
-          Use your finger or stylus to draw
+        <p className="mt-1 text-sm font-medium text-slate-500">
+          cat, tree, house, car, flower...
         </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6">
-        <canvas
-          ref={canvasRef}
-          className="bg-white rounded-2xl shadow-lg touch-none cursor-crosshair border-2 border-gray-100"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-          aria-label="Drawing canvas - draw any object"
-          data-testid="canvas-drawing"
-        />
+      <div className="flex-1 flex items-center justify-center px-4 min-h-0">
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            className="bg-white rounded-xl shadow-2xl shadow-black/50 touch-none border-4 border-slate-700/50"
+            style={{ cursor: currentTool === "eraser" ? "cell" : "crosshair" }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            aria-label="Drawing canvas"
+            data-testid="canvas-drawing"
+          />
+        </div>
       </div>
 
-      <div className="flex-none p-6 flex justify-between items-center gap-4">
-        <button
-          onClick={clearCanvas}
-          className="px-8 py-4 rounded-xl border-2 border-gray-300 text-gray-700 font-medium text-lg transition-all duration-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 min-w-[120px]"
-          data-testid="button-clear"
-          aria-label="Clear the drawing canvas"
-        >
-          Clear
-        </button>
-        
-        <button
-          onClick={handleDone}
-          disabled={!hasDrawn || !isConnected || isProcessing}
-          className="px-12 py-4 rounded-xl bg-blue-600 text-white font-medium text-lg transition-all duration-300 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px] shadow-lg hover:shadow-xl"
-          data-testid="button-done"
-          aria-label="Submit drawing for AI classification"
-        >
-          Done
-        </button>
+      <div className="flex-none p-4 pb-6">
+        <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+          <div className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-sm rounded-xl p-1.5 border border-slate-700/50">
+            <button
+              onClick={() => setCurrentTool("pen")}
+              className={`p-3 rounded-lg transition-all duration-200 ${
+                currentTool === "pen"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+              }`}
+              data-testid="button-pen"
+              aria-label="Pen tool"
+            >
+              <Pencil className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setCurrentTool("eraser")}
+              className={`p-3 rounded-lg transition-all duration-200 ${
+                currentTool === "eraser"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+              }`}
+              data-testid="button-eraser"
+              aria-label="Eraser tool"
+            >
+              <Eraser className="w-5 h-5" />
+            </button>
+            <div className="w-px h-8 bg-slate-700 mx-1" />
+            <button
+              onClick={clearCanvas}
+              className="p-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+              data-testid="button-clear"
+              aria-label="Clear canvas"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <button
+            onClick={handleDone}
+            disabled={!hasDrawn || !isConnected || isProcessing}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+            data-testid="button-done"
+            aria-label="Submit drawing"
+          >
+            <Send className="w-5 h-5" />
+            <span>Classify</span>
+          </button>
+        </div>
       </div>
 
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 text-sm text-gray-400">
-        <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-red-500"} ${isConnected ? "animate-pulse" : ""}`} />
+      <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-slate-500">
+        <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
         <span>{isConnected ? "Connected" : "Disconnected"}</span>
       </div>
     </div>
