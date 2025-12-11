@@ -1,9 +1,122 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Pencil, Brain, Lock, Sparkles } from "lucide-react";
+import { Pencil, Brain, Lock, Sparkles, Monitor, Wifi } from "lucide-react";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
 
+type ViewMode = "tablet" | "desktop";
+
+function getViewMode(): ViewMode {
+  if (typeof window === "undefined") return "desktop";
+  
+  const params = new URLSearchParams(window.location.search);
+  const modeParam = params.get("mode");
+  
+  if (modeParam === "tablet") return "tablet";
+  if (modeParam === "desktop") return "desktop";
+  
+  return window.innerWidth < 768 ? "tablet" : "desktop";
+}
+
+function TabletHomeIdleScreen() {
+  const [dots, setDots] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => (prev + 1) % 4);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative h-screen flex flex-col overflow-hidden">
+      <ParticleBackground />
+      <ExhibitionHeader />
+      
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="text-center max-w-lg mx-auto">
+          <div className="relative mb-10">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 h-40 rounded-full bg-blue-500/10 animate-pulse" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 rounded-full bg-blue-500/20 animate-pulse" style={{ animationDelay: "150ms" }} />
+            </div>
+            <div className="relative w-28 h-28 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center mx-auto shadow-2xl">
+              <Pencil className="w-12 h-12 text-blue-400" />
+            </div>
+          </div>
+          
+          <h1 
+            className="text-3xl md:text-4xl font-black text-white mb-4"
+            data-testid="text-tablet-home-title"
+          >
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              AI Drawing
+            </span>
+            <span className="text-white block mt-1">
+              Station
+            </span>
+          </h1>
+          
+          <p className="text-lg text-slate-400 leading-relaxed mb-8">
+            Waiting for the exhibition to begin
+            <span className="inline-block w-8 text-left">{".".repeat(dots)}</span>
+          </p>
+          
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50">
+              <Monitor className="w-5 h-5 text-blue-400" />
+              <span className="text-slate-300 font-medium">Waiting for display selection</span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-slate-500 mt-6">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <p className="text-xs text-slate-600 uppercase tracking-widest font-medium">
+              Standing By
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 backdrop-blur-sm border border-slate-700/50">
+          <Sparkles className="w-4 h-4 text-blue-400" />
+          <span className="text-sm text-slate-400 font-medium">GSV AI Exhibition</span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-slate-500">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+        <span>Ready</span>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
+  const [viewMode, setViewMode] = useState<ViewMode>(() => getViewMode());
+
+  useEffect(() => {
+    const handleResize = () => {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get("mode")) {
+        setViewMode(window.innerWidth < 768 ? "tablet" : "desktop");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Show tablet idle screen when in tablet mode
+  if (viewMode === "tablet") {
+    return <TabletHomeIdleScreen />;
+  }
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center p-8">
       <ParticleBackground />
