@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
-import { Pencil, Brain, Lock, Sparkles, Monitor, Wifi } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useLocation } from "wouter";
+import { Pencil, Brain, Lock, Sparkles, Monitor } from "lucide-react";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 type ViewMode = "tablet" | "desktop";
 
@@ -18,7 +19,7 @@ function getViewMode(): ViewMode {
   return window.innerWidth < 768 ? "tablet" : "desktop";
 }
 
-function TabletHomeIdleScreen() {
+function TabletHomeIdleScreen({ isConnected }: { isConnected: boolean }) {
   const [dots, setDots] = useState(0);
 
   useEffect(() => {
@@ -90,8 +91,8 @@ function TabletHomeIdleScreen() {
       </div>
 
       <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-slate-500">
-        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-        <span>Ready</span>
+        <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
+        <span>{isConnected ? "Connected" : "Disconnected"}</span>
       </div>
     </div>
   );
@@ -99,6 +100,23 @@ function TabletHomeIdleScreen() {
 
 export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => getViewMode());
+  const [, setLocation] = useLocation();
+
+  const handleStartDrawing = useCallback(() => {
+    // Navigate to doodle page with tablet mode preserved
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get("mode");
+    if (modeParam === "tablet") {
+      setLocation("/doodle?mode=tablet");
+    } else {
+      setLocation("/doodle");
+    }
+  }, [setLocation]);
+
+  const { isConnected } = useWebSocket({
+    mode: viewMode,
+    onStartDrawing: handleStartDrawing,
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -114,7 +132,7 @@ export default function HomePage() {
 
   // Show tablet idle screen when in tablet mode
   if (viewMode === "tablet") {
-    return <TabletHomeIdleScreen />;
+    return <TabletHomeIdleScreen isConnected={isConnected} />;
   }
 
   return (

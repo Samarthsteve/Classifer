@@ -72,4 +72,7 @@ export type WebSocketMessage =
   | { type: 'reset' }
   | { type: 'reset_canvas' }
   | { type: 'connected'; payload: { mode: string } }
-  | { type: 'error'; payload: { message: string } };
+  | { type: 'error'; payload: { message: string } }
+  | { type: 'navigate_to_doodle' }
+  | { type: 'navigate_to_home' }
+  | { type: 'start_drawing' };

@@ -192,6 +192,28 @@ export async function registerRoutes(
               }
             });
             break;
+
+          case "navigate_to_doodle":
+            // Desktop navigated to doodle classifier - notify all tablets to start drawing
+            const startDrawingMessage = JSON.stringify({ type: "start_drawing" });
+            
+            clients.tablet.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(startDrawingMessage);
+              }
+            });
+            break;
+
+          case "navigate_to_home":
+            // Desktop navigated back to home - notify all tablets
+            const goHomeMessage = JSON.stringify({ type: "navigate_to_home" });
+            
+            clients.tablet.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(goHomeMessage);
+              }
+            });
+            break;
         }
       } catch (error) {
         console.error("WebSocket message error:", error);

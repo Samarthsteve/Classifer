@@ -56,12 +56,19 @@ export default function DoodleClassifier() {
     });
   }, [toast]);
 
-  const { isConnected, isReconnecting, submitDrawing, sendReset } = useWebSocket({
+  const { isConnected, isReconnecting, submitDrawing, sendReset, sendNavigateToDoodle } = useWebSocket({
     mode: viewMode,
     onPredictionResult: handlePredictionResult,
     onResetCanvas: handleResetCanvas,
     onError: handleError,
   });
+
+  // Notify tablets when desktop enters the doodle classifier
+  useEffect(() => {
+    if (viewMode === "desktop" && isConnected) {
+      sendNavigateToDoodle();
+    }
+  }, [viewMode, isConnected, sendNavigateToDoodle]);
 
   const handleSubmit = useCallback((payload: DrawingPayload) => {
     setIsProcessing(true);

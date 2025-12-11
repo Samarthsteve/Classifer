@@ -8,10 +8,12 @@ interface UseWebSocketOptions {
   onConnected?: () => void;
   onDisconnected?: () => void;
   onError?: (message: string) => void;
+  onStartDrawing?: () => void;
+  onNavigateToHome?: () => void;
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError } = options;
+  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError, onStartDrawing, onNavigateToHome } = options;
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -46,6 +48,12 @@ export function useWebSocket(options: UseWebSocketOptions) {
             case "error":
               onError?.(message.payload?.message || "An error occurred");
               break;
+            case "start_drawing":
+              onStartDrawing?.();
+              break;
+            case "navigate_to_home":
+              onNavigateToHome?.();
+              break;
           }
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -76,7 +84,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         connect();
       }, 2000);
     }
-  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected]);
+  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onNavigateToHome]);
 
   useEffect(() => {
     connect();
@@ -109,10 +117,24 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
   }, []);
 
+  const sendNavigateToDoodle = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "navigate_to_doodle" }));
+    }
+  }, []);
+
+  const sendNavigateToHome = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "navigate_to_home" }));
+    }
+  }, []);
+
   return {
     isConnected,
     isReconnecting,
     submitDrawing,
     sendReset,
+    sendNavigateToDoodle,
+    sendNavigateToHome,
   };
 }
