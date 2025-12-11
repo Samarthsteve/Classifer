@@ -58,27 +58,6 @@ function ConfidenceBar({ className, confidence, delay, isTop = false }: Confiden
   );
 }
 
-// Animated doodle icon that cycles through different shapes
-function AnimatedDoodleIcon() {
-  const [iconIndex, setIconIndex] = useState(0);
-  const icons = [Pencil, Brain, Zap, Sparkles];
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIconIndex(prev => (prev + 1) % icons.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-  
-  const Icon = icons[iconIndex];
-  
-  return (
-    <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-xl shadow-blue-500/30">
-      <Icon className="w-10 h-10 text-white transition-all duration-300" />
-    </div>
-  );
-}
-
 function IdleScreen({ isConnected, isReconnecting }: { isConnected: boolean; isReconnecting: boolean }) {
   const [dots, setDots] = useState(0);
 
@@ -90,108 +69,67 @@ function IdleScreen({ isConnected, isReconnecting }: { isConnected: boolean; isR
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen relative">
-      {/* Aurora glow effects */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-      </div>
-      
-      <div className="text-center max-w-3xl mx-auto px-8 relative z-10">
-        {/* Animated icon section */}
-        <div className="relative mb-10">
+    <div className="flex flex-col items-center justify-center h-screen">
+      <div className="text-center max-w-2xl mx-auto px-8">
+        <div className="relative mb-12">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-48 h-48 rounded-full bg-blue-500/5 animate-pulse" />
+            <div className="w-40 h-40 rounded-full bg-blue-500/10 animate-pulse" />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-36 h-36 rounded-full bg-blue-500/10 animate-pulse" style={{ animationDelay: "150ms" }} />
+            <div className="w-32 h-32 rounded-full bg-blue-500/20 animate-pulse" style={{ animationDelay: "150ms" }} />
           </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-28 h-28 rounded-full bg-blue-500/15 animate-pulse" style={{ animationDelay: "300ms" }} />
-          </div>
-          <div className="relative flex items-center justify-center">
+          <div className="relative w-28 h-28 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center mx-auto shadow-2xl">
             {isConnected ? (
-              <AnimatedDoodleIcon />
+              <Pencil className="w-12 h-12 text-blue-400" />
             ) : (
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600/50 flex items-center justify-center shadow-xl">
-                <WifiOff className="w-10 h-10 text-slate-500" />
-              </div>
+              <WifiOff className="w-12 h-12 text-slate-500" />
             )}
           </div>
         </div>
         
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
           {isReconnecting ? (
-            <span className="text-slate-300">Reconnecting</span>
+            "Reconnecting"
           ) : isConnected ? (
             <>
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Ready</span>
-              <span className="text-white"> to Analyze</span>
+              <span className="text-blue-400">Waiting</span> for Drawing
             </>
           ) : (
-            <span className="text-slate-300">Connecting</span>
+            "Connecting"
           )}
-          <span className="inline-block w-16 text-left text-blue-400">{".".repeat(dots)}</span>
+          <span className="inline-block w-12 text-left">{".".repeat(dots)}</span>
         </h2>
         
-        <p className="text-xl md:text-2xl text-slate-400 leading-relaxed mb-8">
+        <p className="text-xl md:text-2xl text-slate-400 leading-relaxed">
           {isConnected 
-            ? "Draw something on the tablet and watch the neural network identify it" 
+            ? "Draw something on the tablet and the AI prediction will appear here" 
             : "Establishing connection to the drawing station"}
         </p>
         
         {isConnected && (
-          <>
-            {/* Instructions cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-10">
-              <div className="p-4 rounded-xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/30">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-3 mx-auto">
-                  <Pencil className="w-5 h-5 text-blue-400" />
-                </div>
-                <p className="text-sm text-slate-300 font-medium">Draw</p>
-                <p className="text-xs text-slate-500 mt-1">Sketch any object</p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/30">
-                <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-3 mx-auto">
-                  <Brain className="w-5 h-5 text-cyan-400" />
-                </div>
-                <p className="text-sm text-slate-300 font-medium">Analyze</p>
-                <p className="text-xs text-slate-500 mt-1">AI processes image</p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/30">
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mb-3 mx-auto">
-                  <Zap className="w-5 h-5 text-green-400" />
-                </div>
-                <p className="text-sm text-slate-300 font-medium">Result</p>
-                <p className="text-xs text-slate-500 mt-1">See prediction here</p>
-              </div>
+          <div className="mt-16 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-4 text-slate-500">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
-            
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-4 text-slate-500">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-cyan-500 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-              <p className="text-sm text-slate-600 uppercase tracking-widest font-medium">
-                Awaiting Drawing Input
-              </p>
-            </div>
-          </>
+            <p className="text-sm text-slate-600 uppercase tracking-widest font-medium">
+              Awaiting Input
+            </p>
+          </div>
         )}
       </div>
       
       <div className="absolute bottom-8 left-0 right-0 flex justify-center">
         <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-slate-800/50 backdrop-blur-sm border border-slate-700/50">
           <Sparkles className="w-5 h-5 text-blue-400" />
-          <span className="text-slate-400 font-medium">Neural Network Image Classification</span>
+          <span className="text-slate-400 font-medium">AI-Powered Image Classification</span>
         </div>
       </div>
       
       {/* Home button */}
       <Link href="/">
-        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white z-10" data-testid="link-home-idle">
+        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white" data-testid="link-home-idle">
           <Home className="w-4 h-4" />
           <span className="text-sm font-medium">Home</span>
         </a>
