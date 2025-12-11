@@ -82,8 +82,7 @@ export function ParticleBackground() {
       if (!ctx || !canvas) return;
       timeRef.current += 0.016;
 
-      ctx.fillStyle = "rgba(8, 12, 24, 0.15)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       starsRef.current.forEach((star) => {
         const twinkle = Math.sin(timeRef.current * 2 + star.x * 0.01) * 0.3 + 0.7;
