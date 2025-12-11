@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
-import { RotateCcw, Sparkles, Pencil, WifiOff, TrendingUp, Brain, Lightbulb, Zap } from "lucide-react";
+import { RotateCcw, Sparkles, Pencil, WifiOff, TrendingUp, Brain, Lightbulb, Zap, Home } from "lucide-react";
 import type { PredictionResult } from "@shared/schema";
 
 interface ResultsDisplayProps {
@@ -125,6 +126,14 @@ function IdleScreen({ isConnected, isReconnecting }: { isConnected: boolean; isR
           <span className="text-slate-400 font-medium">AI-Powered Image Classification</span>
         </div>
       </div>
+      
+      {/* Home button */}
+      <Link href="/">
+        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white" data-testid="link-home-idle">
+          <Home className="w-4 h-4" />
+          <span className="text-sm font-medium">Home</span>
+        </a>
+      </Link>
     </div>
   );
 }
@@ -391,6 +400,14 @@ export default function ResultsDisplay({ result, onReset, isConnected, isReconne
         <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
         <span>{isConnected ? "Connected" : "Disconnected"}</span>
       </div>
+      
+      {/* Home button */}
+      <Link href="/">
+        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white z-10" data-testid="link-home-results">
+          <Home className="w-4 h-4" />
+          <span className="text-sm font-medium">Home</span>
+        </a>
+      </Link>
     </div>
   );
 }

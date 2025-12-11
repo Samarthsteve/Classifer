@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
+import { Link } from "wouter";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
-import { Loader2, Pencil, Eraser, Trash2, Send, Monitor, CheckCircle2, Sparkles } from "lucide-react";
+import { Loader2, Pencil, Eraser, Trash2, Send, Monitor, CheckCircle2, Sparkles, Home } from "lucide-react";
 import type { DrawingPayload, PredictionResult } from "@shared/schema";
 
 interface DrawingCanvasProps {
@@ -116,6 +117,14 @@ function TabletIdleScreen({
         <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
         <span>{isConnected ? "Connected" : "Disconnected"}</span>
       </div>
+      
+      {/* Home button */}
+      <Link href="/">
+        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white" data-testid="link-home-tablet-idle">
+          <Home className="w-4 h-4" />
+          <span className="text-sm font-medium">Home</span>
+        </a>
+      </Link>
     </div>
   );
 }
@@ -461,6 +470,14 @@ export default function DrawingCanvas({
         <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
         <span>{isConnected ? "Connected" : "Disconnected"}</span>
       </div>
+      
+      {/* Home button */}
+      <Link href="/">
+        <a className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white z-10" data-testid="link-home-canvas">
+          <Home className="w-4 h-4" />
+          <span className="text-sm font-medium">Home</span>
+        </a>
+      </Link>
     </div>
   );
 }
