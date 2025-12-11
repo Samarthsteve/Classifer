@@ -1,23 +1,132 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
-import { Loader2, Pencil, Eraser, Trash2, Send } from "lucide-react";
-import type { DrawingPayload } from "@shared/schema";
+import { Loader2, Pencil, Eraser, Trash2, Send, Monitor, CheckCircle2, Sparkles } from "lucide-react";
+import type { DrawingPayload, PredictionResult } from "@shared/schema";
 
 interface DrawingCanvasProps {
   onSubmit: (payload: DrawingPayload) => void;
   isProcessing: boolean;
   isConnected: boolean;
   isReconnecting: boolean;
+  hasResult?: boolean;
+  result?: PredictionResult | null;
 }
 
 type DrawingTool = "pen" | "eraser";
+
+function TabletIdleScreen({ 
+  isConnected, 
+  result 
+}: { 
+  isConnected: boolean; 
+  result?: PredictionResult | null;
+}) {
+  const [dots, setDots] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => (prev + 1) % 4);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mainPrediction = result?.predictions?.[0];
+
+  return (
+    <div className="relative h-screen flex flex-col overflow-hidden">
+      <ParticleBackground />
+      <ExhibitionHeader />
+      
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="text-center max-w-lg mx-auto">
+          <div className="relative mb-8">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-36 h-36 rounded-full bg-emerald-500/10 animate-pulse" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-28 h-28 rounded-full bg-emerald-500/20 animate-pulse" style={{ animationDelay: "150ms" }} />
+            </div>
+            <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center mx-auto shadow-2xl">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+            </div>
+          </div>
+          
+          <h2 
+            className="text-2xl md:text-3xl font-bold text-white mb-3"
+            data-testid="text-tablet-idle-title"
+          >
+            <span className="text-emerald-400">Drawing</span> Submitted
+          </h2>
+          
+          {mainPrediction && (
+            <div 
+              className="mb-6 py-4 px-6 rounded-xl bg-slate-800/60 backdrop-blur-sm border border-slate-700/50"
+              data-testid="card-tablet-prediction"
+            >
+              <p className="text-sm text-slate-500 uppercase tracking-widest font-medium mb-2">
+                AI Prediction
+              </p>
+              <p 
+                className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 capitalize"
+                data-testid="text-tablet-prediction-class"
+              >
+                {mainPrediction.class}
+              </p>
+              <p 
+                className="text-lg font-mono text-cyan-400 mt-1"
+                data-testid="text-tablet-prediction-confidence"
+              >
+                {Math.round(mainPrediction.confidence * 100)}% confidence
+              </p>
+            </div>
+          )}
+          
+          <p className="text-lg text-slate-400 leading-relaxed mb-8">
+            Waiting for the display to be ready for the next drawing
+            <span className="inline-block w-8 text-left">{".".repeat(dots)}</span>
+          </p>
+          
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50">
+              <Monitor className="w-5 h-5 text-blue-400" />
+              <span className="text-slate-300 font-medium">Viewing results on display</span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-slate-500 mt-4">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <p className="text-xs text-slate-600 uppercase tracking-widest font-medium">
+              Please Wait
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 backdrop-blur-sm border border-slate-700/50">
+          <Sparkles className="w-4 h-4 text-blue-400" />
+          <span className="text-sm text-slate-400 font-medium">AI Classification Complete</span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-slate-500">
+        <div className={`w-2 h-2 rounded-full transition-all ${isConnected ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-500"}`} />
+        <span>{isConnected ? "Connected" : "Disconnected"}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function DrawingCanvas({ 
   onSubmit, 
   isProcessing, 
   isConnected,
-  isReconnecting 
+  isReconnecting,
+  hasResult = false,
+  result
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -233,6 +342,18 @@ export default function DrawingCanvas({
       height: 28,
     });
   };
+
+  // Clear canvas and reset state when returning from idle screen
+  useEffect(() => {
+    if (!hasResult && canvasRef.current) {
+      clearCanvas();
+    }
+  }, [hasResult]);
+
+  // Show tablet idle screen when we have a result (waiting for desktop to reset)
+  if (hasResult) {
+    return <TabletIdleScreen isConnected={isConnected} result={result} />;
+  }
 
   return (
     <div className="relative h-screen flex flex-col overflow-hidden" ref={containerRef}>

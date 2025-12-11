@@ -80,6 +80,8 @@ export default function DoodleClassifier() {
         isProcessing={isProcessing}
         isConnected={isConnected}
         isReconnecting={isReconnecting}
+        hasResult={result !== null}
+        result={result}
       />
     );
   }
