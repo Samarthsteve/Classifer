@@ -16,7 +16,7 @@ function getViewMode(): ViewMode {
   if (modeParam === "tablet") return "tablet";
   if (modeParam === "desktop") return "desktop";
   
-  return window.innerWidth < 768 ? "tablet" : "desktop";
+  return window.innerWidth <= 1080 ? "tablet" : "desktop";
 }
 
 export default function DoodleClassifier() {
@@ -29,7 +29,7 @@ export default function DoodleClassifier() {
     const handleResize = () => {
       const params = new URLSearchParams(window.location.search);
       if (!params.get("mode")) {
-        setViewMode(window.innerWidth < 768 ? "tablet" : "desktop");
+        setViewMode(window.innerWidth <= 1080 ? "tablet" : "desktop");
       }
     };
 

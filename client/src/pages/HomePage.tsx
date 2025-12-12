@@ -16,7 +16,7 @@ function getViewMode(): ViewMode {
   if (modeParam === "tablet") return "tablet";
   if (modeParam === "desktop") return "desktop";
   
-  return window.innerWidth < 768 ? "tablet" : "desktop";
+  return window.innerWidth <= 1080 ? "tablet" : "desktop";
 }
 
 function TabletHomeIdleScreen({ isConnected }: { isConnected: boolean }) {
@@ -122,7 +122,7 @@ export default function HomePage() {
     const handleResize = () => {
       const params = new URLSearchParams(window.location.search);
       if (!params.get("mode")) {
-        setViewMode(window.innerWidth < 768 ? "tablet" : "desktop");
+        setViewMode(window.innerWidth <= 1080 ? "tablet" : "desktop");
       }
     };
 
