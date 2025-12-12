@@ -354,12 +354,16 @@ export default function DrawingCanvas({
     });
   };
 
-  // Clear canvas and reset state when returning from idle screen
+  // Re-initialize canvas when returning from idle screen
   useEffect(() => {
-    if (!hasResult && canvasRef.current) {
-      clearCanvas();
+    if (!hasResult) {
+      // Use requestAnimationFrame to ensure the canvas element is mounted and container has proper dimensions
+      requestAnimationFrame(() => {
+        initCanvas(false);
+        setHasDrawn(false);
+      });
     }
-  }, [hasResult]);
+  }, [hasResult, initCanvas]);
 
   // Show tablet idle screen when we have a result (waiting for desktop to reset)
   if (hasResult) {
