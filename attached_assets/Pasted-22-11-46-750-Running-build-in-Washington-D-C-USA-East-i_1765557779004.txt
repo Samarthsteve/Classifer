@@ -1,0 +1,48 @@
+22:11:46.750 Running build in Washington, D.C., USA (East) – iad1
+22:11:46.751 Build machine configuration: 2 cores, 8 GB
+22:11:46.873 Cloning github.com/Samarthsteve/Classifer (Branch: main, Commit: bb019ae)
+22:11:46.874 Previous build caches not available.
+22:11:47.078 Cloning completed: 204.000ms
+22:11:47.438 Running "vercel build"
+22:11:47.847 Vercel CLI 50.0.0
+22:11:48.441 Running "install" command: `npm install`...
+22:11:52.984 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+22:11:53.029 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+22:11:58.928 
+22:11:58.929 added 478 packages, and audited 479 packages in 10s
+22:11:58.930 
+22:11:58.930 65 packages are looking for funding
+22:11:58.930   run `npm fund` for details
+22:11:58.951 
+22:11:58.951 9 vulnerabilities (3 low, 5 moderate, 1 high)
+22:11:58.952 
+22:11:58.952 To address issues that do not require attention, run:
+22:11:58.952   npm audit fix
+22:11:58.952 
+22:11:58.952 To address all issues (including breaking changes), run:
+22:11:58.953   npm audit fix --force
+22:11:58.953 
+22:11:58.953 Run `npm audit` for details.
+22:11:59.471 
+22:11:59.471 > rest-express@1.0.0 build
+22:11:59.471 > tsx script/build.ts
+22:11:59.472 
+22:12:02.013 building client...
+22:12:02.089 [36mvite v5.4.21 [32mbuilding for production...[36m[39m
+22:12:02.367 transforming...
+22:12:03.643 
+22:12:03.643 A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+22:12:06.161 [32m✓[39m 1667 modules transformed.
+22:12:06.375 rendering chunks...
+22:12:06.382 computing gzip size...
+22:12:06.437 [2m../dist/public/[22m[32mindex.html                 [39m[1m[2m  2.28 kB[22m[1m[22m[2m │ gzip:  0.90 kB[22m
+22:12:06.437 [2m../dist/public/[22m[2massets/[22m[35mindex-BDcUYCfy.css  [39m[1m[2m 88.64 kB[22m[1m[22m[2m │ gzip: 14.18 kB[22m
+22:12:06.438 [2m../dist/public/[22m[2massets/[22m[36mindex-BUjPTVH-.js   [39m[1m[2m303.49 kB[22m[1m[22m[2m │ gzip: 94.75 kB[22m
+22:12:06.438 [32m✓ built in 4.11s[39m
+22:12:06.439 building server...
+22:12:06.630 
+22:12:06.631   dist/index.cjs  974.0kb
+22:12:06.631 
+22:12:06.631 ⚡ Done in 181ms
+22:12:06.715 Error: No Output Directory named "dist" found after the Build completed. Update vercel.json#outputDirectory to ensure the correct output directory is generated.
+22:12:06.716 Learn More: https://vercel.link/missing-public-directory
