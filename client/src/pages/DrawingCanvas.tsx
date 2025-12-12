@@ -145,11 +145,13 @@ export default function DrawingCanvas({
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
   const getCanvasSize = useCallback(() => {
-    if (!containerRef.current) return { width: 500, height: 500 };
-    const containerWidth = containerRef.current.clientWidth - 32;
-    const containerHeight = containerRef.current.clientHeight - 180;
-    const size = Math.min(containerWidth, containerHeight, 700);
-    return { width: size, height: size };
+    if (!containerRef.current) return { width: 400, height: 400 };
+    const containerWidth = containerRef.current.clientWidth - 48;
+    const containerHeight = containerRef.current.clientHeight - 280;
+    // Max 450px for tablets, ensures room for header and controls
+    const maxSize = window.innerWidth <= 1080 ? 450 : 600;
+    const size = Math.min(containerWidth, containerHeight, maxSize);
+    return { width: Math.max(280, size), height: Math.max(280, size) };
   }, []);
 
   const initCanvas = useCallback((preserveDrawing = false) => {
@@ -384,23 +386,27 @@ export default function DrawingCanvas({
         </div>
       )}
 
-      <div className="flex-none pt-16 pb-4 px-4 text-center">
+      <div className="flex-none pt-12 pb-2 px-6 text-center">
         <h2 
-          className="text-xl md:text-2xl font-semibold text-white"
+          className="text-2xl font-bold text-white"
           data-testid="text-drawing-prompt"
         >
-          Draw any object
+          <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            Draw
+          </span>{" "}
+          any object
         </h2>
-        <p className="mt-1 text-sm font-medium text-slate-500">
-          cat, tree, house, car, flower...
+        <p className="mt-2 text-sm font-medium text-slate-400">
+          cat, tree, house, car, flower, sun...
         </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 min-h-0">
+      <div className="flex-1 flex items-center justify-center px-6 py-4">
         <div className="relative">
+          <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl" />
           <canvas
             ref={canvasRef}
-            className="bg-white rounded-xl shadow-2xl shadow-black/50 touch-none border-4 border-slate-700/50"
+            className="relative bg-white rounded-2xl shadow-2xl shadow-black/50 touch-none border-2 border-slate-600/50"
             style={{ cursor: currentTool === "eraser" ? "cell" : "crosshair" }}
             onMouseDown={startDrawing}
             onMouseMove={draw}
@@ -415,8 +421,8 @@ export default function DrawingCanvas({
         </div>
       </div>
 
-      <div className="flex-none p-4 pb-6">
-        <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+      <div className="flex-none px-6 pb-8 pt-2">
+        <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
           <div className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-sm rounded-xl p-1.5 border border-slate-700/50">
             <button
               onClick={() => setCurrentTool("pen")}
@@ -456,7 +462,7 @@ export default function DrawingCanvas({
           <button
             onClick={handleDone}
             disabled={!hasDrawn || !isConnected || isProcessing}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+            className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold text-base transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
             data-testid="button-done"
             aria-label="Submit drawing"
           >
