@@ -7,41 +7,25 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
-// CORS configuration - allow same-origin requests and configured origins
+// CORS configuration for split frontend/backend deployment
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(",") 
-  : [];
+  : ["http://localhost:5000", "http://localhost:3000"];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (same-origin requests, mobile apps, curl, etc.)
+    // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
     // Allow if origin is in the allowed list or wildcard is set
     if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
-      return callback(null, true);
+      callback(null, true);
+    } else if (process.env.NODE_ENV !== "production") {
+      // Allow all origins in development
+      callback(null, true);
+    } else {
+      // Reject unknown origins in production
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
-    
-    // In production, allow the request origin if it matches common deployment patterns
-    // This handles same-origin requests where the Origin header is still sent
-    if (process.env.NODE_ENV === "production") {
-      // Allow all .onrender.com origins (Render deployment)
-      if (origin.endsWith(".onrender.com")) {
-        return callback(null, true);
-      }
-      // Allow all .replit.dev and .repl.co origins (Replit deployment)
-      if (origin.endsWith(".replit.dev") || origin.endsWith(".repl.co")) {
-        return callback(null, true);
-      }
-    }
-    
-    // Allow all origins in development
-    if (process.env.NODE_ENV !== "production") {
-      return callback(null, true);
-    }
-    
-    // For any other production origin, allow it (since frontend/backend are same-origin)
-    callback(null, true);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

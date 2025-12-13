@@ -20,29 +20,13 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const connect = useCallback(() => {
-    // Check if WebSocket is supported
-    if (typeof WebSocket === "undefined") {
-      console.warn("WebSocket not supported in this browser");
-      return;
-    }
-
     // Use environment variable for WebSocket URL in production, fallback to same-origin for development
     let wsUrl: string;
-    try {
-      if (import.meta.env.VITE_WS_URL) {
-        wsUrl = import.meta.env.VITE_WS_URL;
-      } else {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const host = window.location.host;
-        if (!host) {
-          console.warn("Unable to determine host for WebSocket connection");
-          return;
-        }
-        wsUrl = `${protocol}//${host}/ws`;
-      }
-    } catch (urlError) {
-      console.error("Failed to construct WebSocket URL:", urlError);
-      return;
+    if (import.meta.env.VITE_WS_URL) {
+      wsUrl = import.meta.env.VITE_WS_URL;
+    } else {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl = `${protocol}//${window.location.host}/ws`;
     }
     
     try {
@@ -52,11 +36,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
       ws.onopen = () => {
         setIsConnected(true);
         setIsReconnecting(false);
-        try {
-          ws.send(JSON.stringify({ type: "connected", payload: { mode } }));
-        } catch (sendError) {
-          console.error("Failed to send connected message:", sendError);
-        }
+        ws.send(JSON.stringify({ type: "connected", payload: { mode } }));
         onConnected?.();
       };
 
@@ -95,27 +75,20 @@ export function useWebSocket(options: UseWebSocketOptions) {
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
             connect();
-          }, 3000);
+          }, 2000);
         }
       };
 
-      ws.onerror = (errorEvent) => {
-        console.warn("WebSocket error occurred, will attempt to reconnect");
-        try {
-          ws.close();
-        } catch (closeError) {
-          // Ignore close errors
-        }
+      ws.onerror = () => {
+        ws.close();
       };
     } catch (error) {
       console.error("WebSocket connection failed:", error);
       setIsReconnecting(true);
-      if (!reconnectTimeoutRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => {
-          reconnectTimeoutRef.current = null;
-          connect();
-        }, 3000);
-      }
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        connect();
+      }, 2000);
     }
   }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onNavigateToHome]);
 
