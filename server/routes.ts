@@ -48,20 +48,19 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
     const endpoint = `projects/${projectId}/locations/${region}/endpoints/${endpointId}`;
 
     // Call Vertex AI endpoint
+    // For image classification, the instance should be a single base64 string
     const request = {
       endpoint,
-      instances: [
-        {
-          content: base64Image,
-        },
-      ],
+      instances: [base64Image],
       parameters: {
         confidenceThreshold: 0.4,
         maxPredictions: 5,
       },
     };
 
+    console.log("Sending prediction request to endpoint:", endpoint);
     const [response] = await client.predict(request);
+    console.log("Received prediction response");
 
     // Parse Vertex AI response
     const predictions: Array<{ class: DoodleClass; confidence: number }> = [];
