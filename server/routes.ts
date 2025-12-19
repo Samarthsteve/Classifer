@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { DOODLE_CLASSES, type DoodleClass, type PredictionResult, drawingSubmissionSchema } from "@shared/schema";
+import { PredictionServiceClient } from "@google-cloud/aiplatform";
 
 // Store connected clients by mode
 const clients = {
@@ -9,48 +10,93 @@ const clients = {
   desktop: new Set<WebSocket>(),
 };
 
-// Mock prediction function - TODO: Replace with real CNN model inference
-// The modelData parameter is a 28x28 (784 elements) normalized grayscale array
-function mockPredict(displayImage: string, modelData: number[]): PredictionResult {
-  // In a real implementation, modelData would be fed to a CNN model
-  // modelData is a flat array of 784 values (28x28), normalized 0-1
-  // where 0 = white (no ink) and 1 = black (ink)
-  
-  // For now, we just use mock predictions
-  // TODO: Replace with actual TensorFlow.js or ONNX model inference
-  
-  // Randomly select 4 classes
-  const shuffled = [...DOODLE_CLASSES].sort(() => Math.random() - 0.5);
-  const selectedClasses = shuffled.slice(0, 4) as DoodleClass[];
+// Vertex AI prediction function
+async function vertexPredict(displayImage: string, modelData: number[]): Promise<PredictionResult> {
+  try {
+    const projectId = process.env.VERTEX_PROJECT_ID;
+    const region = process.env.VERTEX_REGION || "us-central1";
+    const endpointId = process.env.VERTEX_ENDPOINT_ID;
 
-  // Generate realistic probabilities
-  const topConfidence = 0.60 + Math.random() * 0.30; // 60-90%
-  const secondConfidence = 0.05 + Math.random() * 0.20; // 5-25%
-  const thirdConfidence = 0.02 + Math.random() * 0.08; // 2-10%
-  const fourthConfidence = Math.max(0.01, 1 - topConfidence - secondConfidence - thirdConfidence);
+    // Validate configuration
+    if (!projectId || !endpointId) {
+      console.error("Missing Vertex AI configuration: VERTEX_PROJECT_ID or VERTEX_ENDPOINT_ID");
+      throw new Error("Vertex AI not configured");
+    }
 
-  const predictions = [
-    { class: selectedClasses[0], confidence: topConfidence },
-    { class: selectedClasses[1], confidence: secondConfidence },
-    { class: selectedClasses[2], confidence: thirdConfidence },
-    { class: selectedClasses[3], confidence: fourthConfidence },
-  ];
+    // Extract base64 image from data URL
+    const base64Image = displayImage.replace(/^data:image\/[a-z]+;base64,/, "");
 
-  // Generate placeholder training examples
-  const trainingExamples: Record<string, string[]> = {};
-  for (const pred of predictions) {
-    trainingExamples[pred.class] = [
-      `/api/placeholder/${pred.class}/1`,
-      `/api/placeholder/${pred.class}/2`,
-      `/api/placeholder/${pred.class}/3`,
-    ];
+    // Initialize Vertex AI client
+    const client = new PredictionServiceClient({
+      apiEndpoint: `${region}-aiplatform.googleapis.com`,
+    });
+
+    const endpoint = client.matchEndpointPath(projectId, region, endpointId);
+
+    // Call Vertex AI endpoint
+    const request = {
+      endpoint,
+      instances: [
+        {
+          content: base64Image,
+        },
+      ],
+      parameters: {
+        confidenceThreshold: 0.4,
+        maxPredictions: 5,
+      },
+    };
+
+    const [response] = await client.predict(request);
+
+    // Parse Vertex AI response
+    const predictions: Array<{ class: DoodleClass; confidence: number }> = [];
+
+    if (response.predictions && Array.isArray(response.predictions)) {
+      for (const pred of response.predictions) {
+        if (pred && typeof pred === "object") {
+          const displayNames = (pred as Record<string, unknown>).displayNames as string[] | undefined;
+          const confidences = (pred as Record<string, unknown>).confidences as number[] | undefined;
+
+          if (displayNames && confidences && displayNames.length > 0) {
+            for (let i = 0; i < Math.min(displayNames.length, confidences.length); i++) {
+              const className = displayNames[i].toLowerCase() as DoodleClass;
+              if (DOODLE_CLASSES.includes(className)) {
+                predictions.push({
+                  class: className,
+                  confidence: confidences[i],
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Sort by confidence and take top 3
+    const sortedPredictions = predictions
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 3);
+
+    // Generate placeholder training examples
+    const trainingExamples: Record<string, string[]> = {};
+    for (const pred of sortedPredictions) {
+      trainingExamples[pred.class] = [
+        `/api/placeholder/${pred.class}/1`,
+        `/api/placeholder/${pred.class}/2`,
+        `/api/placeholder/${pred.class}/3`,
+      ];
+    }
+
+    return {
+      predictions: sortedPredictions,
+      trainingExamples,
+      userDrawing: displayImage,
+    };
+  } catch (error) {
+    console.error("Vertex AI prediction error:", error);
+    throw error;
   }
-
-  return {
-    predictions,
-    trainingExamples,
-    userDrawing: displayImage,
-  };
 }
 
 // Pastel colors for placeholder images
@@ -160,26 +206,48 @@ export async function registerRoutes(
             const validatedSubmission = parseResult.data;
             const { displayImage, modelData } = validatedSubmission.drawing;
             
-            // Generate mock prediction using the validated 28x28 modelData
-            // TODO: In future, pass modelData to actual CNN model for inference
-            const result = mockPredict(displayImage, modelData);
-            
-            // Broadcast to all desktop clients
-            const resultMessage = JSON.stringify({
-              type: "prediction_result",
-              payload: result,
-            });
-            
-            clients.desktop.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(resultMessage);
+            // Call Vertex AI prediction asynchronously
+            (async () => {
+              try {
+                const result = await vertexPredict(displayImage, modelData);
+                
+                // Broadcast to all desktop clients
+                const resultMessage = JSON.stringify({
+                  type: "prediction_result",
+                  payload: result,
+                });
+                
+                clients.desktop.forEach((client) => {
+                  if (client.readyState === WebSocket.OPEN) {
+                    client.send(resultMessage);
+                  }
+                });
+                
+                // Also send back to the tablet that submitted
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(resultMessage);
+                }
+              } catch (predictionError) {
+                console.error("Prediction failed:", predictionError);
+                
+                // Send error to tablet
+                const errorMsg = JSON.stringify({
+                  type: "error",
+                  payload: { message: "Prediction service unavailable. Please try again." },
+                });
+                
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(errorMsg);
+                }
+                
+                // Notify all desktop clients to reset their waiting state
+                clients.desktop.forEach((client) => {
+                  if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: "reset_canvas" }));
+                  }
+                });
               }
-            });
-            
-            // Also send back to the tablet that submitted
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(resultMessage);
-            }
+            })();
             break;
 
           case "reset":
