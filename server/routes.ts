@@ -31,7 +31,8 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
       apiEndpoint: `${region}-aiplatform.googleapis.com`,
     });
 
-    const endpoint = client.matchEndpointPath(projectId, region, endpointId);
+    // Construct endpoint path
+    const endpoint = `projects/${projectId}/locations/${region}/endpoints/${endpointId}`;
 
     // Call Vertex AI endpoint
     const request = {
