@@ -48,10 +48,14 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
     const endpoint = `projects/${projectId}/locations/${region}/endpoints/${endpointId}`;
 
     // Call Vertex AI endpoint
-    // For image classification, the instance should be a single base64 string
+    // For image classification, wrap the base64 in bytesBase64Encoded object
     const request = {
       endpoint,
-      instances: [base64Image],
+      instances: [
+        {
+          bytesBase64Encoded: base64Image,
+        },
+      ],
       parameters: {
         confidenceThreshold: 0.4,
         maxPredictions: 5,
