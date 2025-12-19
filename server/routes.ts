@@ -16,11 +16,24 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
     const projectId = process.env.VERTEX_PROJECT_ID;
     const region = process.env.VERTEX_REGION || "us-central1";
     const endpointId = process.env.VERTEX_ENDPOINT_ID;
+    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
     // Validate configuration
     if (!projectId || !endpointId) {
       console.error("Missing Vertex AI configuration: VERTEX_PROJECT_ID or VERTEX_ENDPOINT_ID");
       throw new Error("Vertex AI not configured");
+    }
+
+    if (!credentialsPath) {
+      console.error("Missing GOOGLE_APPLICATION_CREDENTIALS environment variable");
+      throw new Error("Google Cloud authentication not configured");
+    }
+
+    // Check if credentials file exists
+    const fs = require("fs");
+    if (!fs.existsSync(credentialsPath)) {
+      console.error(`Google Cloud credentials file not found at: ${credentialsPath}`);
+      throw new Error("Google Cloud credentials file not found");
     }
 
     // Extract base64 image from data URL
