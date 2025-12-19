@@ -48,12 +48,12 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
     const endpoint = `projects/${projectId}/locations/${region}/endpoints/${endpointId}`;
 
     // Call Vertex AI endpoint
-    // For image classification, wrap the base64 in bytesBase64Encoded object
+    // Format matches official Google Cloud Vertex AI documentation
     const request = {
       endpoint,
       instances: [
         {
-          bytesBase64Encoded: base64Image,
+          content: base64Image,
         },
       ],
       parameters: {
