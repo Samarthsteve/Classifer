@@ -1,0 +1,88 @@
+Task:
+Analyze the existing project and replace the mock doodle classifier with a real Google Vertex AI Image Classification integration, with minimal architectural changes.
+
+Project context:
+
+This is a Node.js + Express backend using WebSockets (ws) for real-time communication.
+
+Tablet sends a drawing (displayImage as base64 PNG + modelData 28×28 array).
+
+Backend currently calls a mockPredict() function and broadcasts results to desktop and tablet clients.
+
+Frontend and WebSocket message formats MUST NOT change.
+
+Goal:
+
+Replace mockPredict() with a real inference call to a deployed Google Vertex AI Image Classification endpoint.
+
+Keep the rest of the WebSocket logic, schemas, and UI behavior exactly the same.
+
+What to analyze first:
+
+Understand the existing WebSocket flow (drawing_submitted → prediction_result).
+
+Identify where mockPredict() is used and how PredictionResult is constructed.
+
+Verify how displayImage is encoded (base64 PNG).
+
+Implementation requirements:
+
+Remove or bypass the mockPredict() function.
+
+Implement an async function vertexPredict(displayImage: string): Promise<PredictionResult>.
+
+Use the official @google-cloud/aiplatform Node.js SDK.
+
+Read configuration from environment variables:
+
+VERTEX_PROJECT_ID
+
+VERTEX_REGION
+
+VERTEX_ENDPOINT_ID
+
+Authentication will be handled via GOOGLE_APPLICATION_CREDENTIALS (service account JSON).
+
+Call the Vertex AI endpoint using:
+
+{
+  "instances": [
+    { "content": "<base64_image_without_data_prefix>" }
+  ],
+  "parameters": {
+    "confidenceThreshold": 0.4,
+    "maxPredictions": 5
+  }
+}
+
+
+Parse the Vertex AI response and convert it into the existing PredictionResult shape:
+
+{
+  predictions: [
+    { class: string, confidence: number }
+  ],
+  trainingExamples: {},
+  userDrawing: displayImage
+}
+
+
+Sort predictions by confidence and return the top 3.
+
+If the Vertex AI request fails, return a graceful error response instead of crashing.
+
+Strict constraints (very important):
+
+❌ Do NOT refactor WebSocket logic
+
+❌ Do NOT change frontend contracts or message formats
+
+❌ Do NOT introduce local ML (no TensorFlow.js, no ONNX)
+
+✅ Keep changes minimal and well-isolated
+
+Outcome:
+
+The website should behave exactly the same as before, except predictions now come from Vertex AI instead of mock data.
+
+Later, switching from pilot model to final model should require only changing VERTEX_ENDPOINT_ID.
