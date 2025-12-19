@@ -163,6 +163,24 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Log Vertex AI configuration status on startup
+  const projectId = process.env.VERTEX_PROJECT_ID;
+  const endpointId = process.env.VERTEX_ENDPOINT_ID;
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  if (!projectId || !endpointId || !credentialsPath) {
+    console.warn("⚠️  Vertex AI not fully configured. To enable predictions, set these environment variables:");
+    if (!projectId) console.warn("  - VERTEX_PROJECT_ID: Your GCP project ID");
+    if (!endpointId) console.warn("  - VERTEX_ENDPOINT_ID: Your deployed endpoint ID");
+    if (!credentialsPath) console.warn("  - GOOGLE_APPLICATION_CREDENTIALS: Path to service account JSON");
+    if (!credentialsPath || (credentialsPath && !existsSync(credentialsPath))) {
+      console.warn("  - Upload your service account JSON file and set its path");
+    }
+    console.warn("");
+  } else if (existsSync(credentialsPath)) {
+    console.log("✓ Vertex AI configured and ready");
+  }
+
   // API endpoint for placeholder training images
   app.get("/api/placeholder/:className/:variant", (req, res) => {
     const { className, variant } = req.params;
