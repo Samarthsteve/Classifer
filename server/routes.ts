@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { DOODLE_CLASSES, type DoodleClass, type PredictionResult, drawingSubmissionSchema } from "@shared/schema";
 import { PredictionServiceClient } from "@google-cloud/aiplatform";
+import { existsSync } from "fs";
 
 // Store connected clients by mode
 const clients = {
@@ -30,8 +31,7 @@ async function vertexPredict(displayImage: string, modelData: number[]): Promise
     }
 
     // Check if credentials file exists
-    const fs = require("fs");
-    if (!fs.existsSync(credentialsPath)) {
+    if (!existsSync(credentialsPath)) {
       console.error(`Google Cloud credentials file not found at: ${credentialsPath}`);
       throw new Error("Google Cloud credentials file not found");
     }
