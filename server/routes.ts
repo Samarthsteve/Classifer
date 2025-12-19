@@ -2,8 +2,33 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { DOODLE_CLASSES, type DoodleClass, type PredictionResult, drawingSubmissionSchema } from "@shared/schema";
-import { PredictionServiceClient } from "@google-cloud/aiplatform";
 import { existsSync } from "fs";
+import fetch from "node-fetch";
+import { GoogleAuth } from "google-auth-library";
+import { PNG } from "pngjs";
+
+function modelDataToBase64PNG(modelData: number[]): string {
+  const width = 28;
+  const height = 28;
+
+  const png = new PNG({ width, height });
+
+  for (let i = 0; i < modelData.length; i++) {
+    const v = Math.max(0, Math.min(1, modelData[i])); // clamp 0–1
+    const pixel = Math.round(v * 255);
+
+    const idx = i * 4;
+    png.data[idx + 0] = pixel; // R
+    png.data[idx + 1] = pixel; // G
+    png.data[idx + 2] = pixel; // B
+    png.data[idx + 3] = 255;   // A
+  }
+
+  const buffer = PNG.sync.write(png);
+  return buffer.toString("base64");
+}
+
+
 
 // Store connected clients by mode
 const clients = {
@@ -12,109 +37,131 @@ const clients = {
 };
 
 // Vertex AI prediction function
-async function vertexPredict(displayImage: string, modelData: number[]): Promise<PredictionResult> {
-  try {
-    const projectId = process.env.VERTEX_PROJECT_ID;
-    const region = process.env.VERTEX_REGION || "us-central1";
-    const endpointId = process.env.VERTEX_ENDPOINT_ID;
-    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+async function vertexPredict(
+  displayImage: string,
+  _modelData: number[]
+): Promise<PredictionResult> {
+  const projectId = process.env.VERTEX_PROJECT_ID;
+  const region = process.env.VERTEX_REGION || "us-central1";
+  const endpointId = process.env.VERTEX_ENDPOINT_ID;
 
-    // Validate configuration
-    if (!projectId || !endpointId) {
-      console.error("Missing Vertex AI configuration: VERTEX_PROJECT_ID or VERTEX_ENDPOINT_ID");
-      throw new Error("Vertex AI not configured");
-    }
+  if (!projectId || !endpointId) {
+    throw new Error("Vertex AI environment variables not set");
+  }
 
-    if (!credentialsPath) {
-      console.error("Missing GOOGLE_APPLICATION_CREDENTIALS environment variable");
-      throw new Error("Google Cloud authentication not configured");
-    }
+  console.log("🟢 VertexPredict called");
+  console.log("📌 Project:", projectId);
+  console.log("📌 Region:", region);
+  console.log("📌 Endpoint:", endpointId);
 
-    // Check if credentials file exists
-    if (!existsSync(credentialsPath)) {
-      console.error(`Google Cloud credentials file not found at: ${credentialsPath}`);
-      throw new Error("Google Cloud credentials file not found");
-    }
+  // Remove data URL prefix
+  const base64Image = modelDataToBase64PNG(_modelData);
 
-    // Extract base64 image from data URL
-    const base64Image = displayImage.replace(/^data:image\/[a-z]+;base64,/, "");
 
-    // Initialize Vertex AI client
-    const client = new PredictionServiceClient({
-      apiEndpoint: `${region}-aiplatform.googleapis.com`,
-    });
+  console.log("🖼️ Image base64 length:", base64Image.length);
 
-    // Construct endpoint path
-    const endpoint = `projects/${projectId}/locations/${region}/endpoints/${endpointId}`;
+  // Get OAuth access token
+  const auth = new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+  });
+  const client = await auth.getClient();
+  const accessTokenResponse = await client.getAccessToken();
 
-    // Call Vertex AI endpoint
-    // Format matches official Google Cloud Vertex AI documentation
-    const request = {
-      endpoint,
-      instances: [
-        {
-          content: base64Image,
-        },
-      ],
-      parameters: {
-        confidenceThreshold: 0.4,
-        maxPredictions: 5,
+  if (!accessTokenResponse.token) {
+    throw new Error("Failed to obtain access token");
+  }
+
+  console.log("🔑 Access token obtained");
+
+  const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/endpoints/${endpointId}:predict`;
+
+  const body = {
+    instances: [
+      {
+        content: base64Image,
       },
-    };
+    ],
+    parameters: {
+      confidenceThreshold: 0,
+      maxPredictions: 5,
+    },
+  };
 
-    console.log("Sending prediction request to endpoint:", endpoint);
-    const [response] = await client.predict(request);
-    console.log("Received prediction response");
+  console.log("➡️ Sending request to Vertex AI");
+  console.log("➡️ Request body keys:", Object.keys(body));
 
-    // Parse Vertex AI response
-    const predictions: Array<{ class: DoodleClass; confidence: number }> = [];
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessTokenResponse.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 
-    if (response.predictions && Array.isArray(response.predictions)) {
-      for (const pred of response.predictions) {
-        if (pred && typeof pred === "object") {
-          const displayNames = (pred as Record<string, unknown>).displayNames as string[] | undefined;
-          const confidences = (pred as Record<string, unknown>).confidences as number[] | undefined;
+  console.log("⬅️ Vertex AI HTTP status:", response.status);
 
-          if (displayNames && confidences && displayNames.length > 0) {
-            for (let i = 0; i < Math.min(displayNames.length, confidences.length); i++) {
-              const className = displayNames[i].toLowerCase() as DoodleClass;
-              if (DOODLE_CLASSES.includes(className)) {
-                predictions.push({
-                  class: className,
-                  confidence: confidences[i],
-                });
-              }
-            }
-          }
-        }
+  const rawText = await response.text();
+
+  if (!response.ok) {
+    console.error("❌ Vertex AI error response:");
+    console.error(rawText);
+    throw new Error("Vertex AI prediction failed");
+  }
+
+  console.log("✅ Raw Vertex AI response:");
+  console.log(rawText);
+
+  const json = JSON.parse(rawText);
+
+  console.log("🧠 Parsed response object:");
+  console.dir(json, { depth: null });
+
+  const predictions: { class: DoodleClass; confidence: number }[] = [];
+
+  for (const pred of json.predictions ?? []) {
+    const names = pred.displayNames;
+    const scores = pred.confidences;
+
+    if (Array.isArray(names) && Array.isArray(scores)) {
+      for (let i = 0; i < names.length; i++) {
+        const className = names[i].toLowerCase() as DoodleClass;
+        const confidence = scores[i];
+
+        console.log(`🔍 Found prediction: ${className} → ${confidence}`);
+
+        predictions.push({
+          class: className,
+          confidence,
+        });
+
       }
     }
-
-    // Sort by confidence and take top 3
-    const sortedPredictions = predictions
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 3);
-
-    // Generate placeholder training examples
-    const trainingExamples: Record<string, string[]> = {};
-    for (const pred of sortedPredictions) {
-      trainingExamples[pred.class] = [
-        `/api/placeholder/${pred.class}/1`,
-        `/api/placeholder/${pred.class}/2`,
-        `/api/placeholder/${pred.class}/3`,
-      ];
-    }
-
-    return {
-      predictions: sortedPredictions,
-      trainingExamples,
-      userDrawing: displayImage,
-    };
-  } catch (error) {
-    console.error("Vertex AI prediction error:", error);
-    throw error;
   }
+
+  predictions.sort((a, b) => b.confidence - a.confidence);
+
+  const topPredictions = predictions.slice(0, 3);
+
+  console.log("🏆 Top predictions:", topPredictions);
+
+  const trainingExamples: Record<string, string[]> = {};
+  for (const pred of topPredictions) {
+    trainingExamples[pred.class] = [
+      `/api/placeholder/${pred.class}/1`,
+      `/api/placeholder/${pred.class}/2`,
+      `/api/placeholder/${pred.class}/3`,
+    ];
+  }
+
+  return {
+    predictions: topPredictions,
+    trainingExamples,
+    userDrawing: displayImage,
+  };
 }
+
+
 
 // Pastel colors for placeholder images
 const PASTEL_COLORS: Record<string, string> = {
