@@ -70,23 +70,17 @@ export default function DigitClassifier() {
     }
   }, [viewMode]);
 
-  // Notify tablets when desktop enters the digit classifier
+  // Notify tablets when tablet enters the digit classifier
   useEffect(() => {
     if (viewMode === "tablet" && isConnected) {
       sendNavigateToDigit();
     }
   }, [viewMode, isConnected, sendNavigateToDigit]);
 
-  const handleSubmit = useCallback((payload: DrawingPayload) => {
-    setIsProcessing(true);
-    submitDrawing(payload);
-  }, [submitDrawing]);
+  // Only show component on tablet, desktop will redirect
+  if (viewMode === "desktop") {
+    return null; // Will redirect immediately
+  }
 
-  const handleReset = useCallback(() => {
-    setResult(null);
-    sendReset();
-  }, [sendReset]);
-
-  // Desktop navigates away, only tablet shows educational content
   return <DigitEducational />;
 }
