@@ -1,9 +1,28 @@
-import { Link } from "wouter";
+import { useCallback } from "react";
+import { Link, useLocation } from "wouter";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Home, Brain, Zap, Eye, Layers, Network, Lightbulb } from "lucide-react";
 
 export default function DigitEducational() {
+  const [, setLocation] = useLocation();
+
+  const handleNavigateToDrawing = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get("mode");
+    if (modeParam === "tablet") {
+      setLocation("/digit?mode=tablet");
+    } else {
+      setLocation("/digit");
+    }
+  }, [setLocation]);
+
+  useWebSocket({
+    mode: "tablet",
+    onStartDigitDrawing: handleNavigateToDrawing,
+  });
+
   return (
     <div className="relative h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <ParticleBackground />
