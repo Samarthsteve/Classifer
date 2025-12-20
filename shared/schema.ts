@@ -74,7 +74,6 @@ export const drawingSubmissionSchema = z.object({
 export type WebSocketMessage = 
   | { type: 'drawing_submitted'; payload: DrawingSubmission }
   | { type: 'prediction_result'; payload: PredictionResult }
-  | { type: 'pixel_data'; payload: { pixels: number[]; mode: 'digit' | 'doodle' } }
   | { type: 'reset' }
   | { type: 'reset_canvas' }
   | { type: 'connected'; payload: { mode: string } }

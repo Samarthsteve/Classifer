@@ -12,11 +12,10 @@ interface UseWebSocketOptions {
   onStartDoodleDrawing?: () => void;
   onStartDigitDrawing?: () => void;
   onNavigateToHome?: () => void;
-  onPixelData?: (data: { pixels: number[]; mode: string }) => void;
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome, onPixelData } = options;
+  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome } = options;
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -69,9 +68,6 @@ export function useWebSocket(options: UseWebSocketOptions) {
             case "navigate_to_home":
               onNavigateToHome?.();
               break;
-            case "pixel_data":
-              onPixelData?.(message.payload);
-              break;
           }
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -102,7 +98,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         connect();
       }, 2000);
     }
-  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome, onPixelData]);
+  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome]);
 
   useEffect(() => {
     connect();
