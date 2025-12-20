@@ -81,4 +81,6 @@ export type WebSocketMessage =
   | { type: 'navigate_to_doodle' }
   | { type: 'navigate_to_digit' }
   | { type: 'navigate_to_home' }
-  | { type: 'start_drawing' };
+  | { type: 'start_drawing' }
+  | { type: 'start_doodle_drawing' }
+  | { type: 'start_digit_drawing' };

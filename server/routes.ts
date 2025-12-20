@@ -361,19 +361,19 @@ export async function registerRoutes(
             break;
 
           case "navigate_to_doodle":
-            // Desktop navigated to doodle classifier - notify all tablets to start drawing
-            const startDrawingMessage = JSON.stringify({ type: "start_drawing" });
+            // Desktop navigated to doodle classifier - notify all tablets to start doodle drawing
+            const startDoodleDrawingMessage = JSON.stringify({ type: "start_doodle_drawing" });
             
             clients.tablet.forEach((client) => {
               if (client.readyState === WebSocket.OPEN) {
-                client.send(startDrawingMessage);
+                client.send(startDoodleDrawingMessage);
               }
             });
             break;
 
           case "navigate_to_digit":
-            // Desktop navigated to digit classifier - notify all tablets to start drawing
-            const startDigitDrawingMessage = JSON.stringify({ type: "start_drawing" });
+            // Desktop navigated to digit classifier - notify all tablets to start digit drawing
+            const startDigitDrawingMessage = JSON.stringify({ type: "start_digit_drawing" });
             
             clients.tablet.forEach((client) => {
               if (client.readyState === WebSocket.OPEN) {

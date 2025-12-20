@@ -9,11 +9,13 @@ interface UseWebSocketOptions {
   onDisconnected?: () => void;
   onError?: (message: string) => void;
   onStartDrawing?: () => void;
+  onStartDoodleDrawing?: () => void;
+  onStartDigitDrawing?: () => void;
   onNavigateToHome?: () => void;
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError, onStartDrawing, onNavigateToHome } = options;
+  const { mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onError, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome } = options;
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -57,6 +59,12 @@ export function useWebSocket(options: UseWebSocketOptions) {
             case "start_drawing":
               onStartDrawing?.();
               break;
+            case "start_doodle_drawing":
+              onStartDoodleDrawing?.();
+              break;
+            case "start_digit_drawing":
+              onStartDigitDrawing?.();
+              break;
             case "navigate_to_home":
               onNavigateToHome?.();
               break;
@@ -90,7 +98,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         connect();
       }, 2000);
     }
-  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onNavigateToHome]);
+  }, [mode, onPredictionResult, onResetCanvas, onConnected, onDisconnected, onStartDrawing, onStartDoodleDrawing, onStartDigitDrawing, onNavigateToHome]);
 
   useEffect(() => {
     connect();

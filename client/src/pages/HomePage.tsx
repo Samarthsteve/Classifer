@@ -102,8 +102,7 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => getViewMode());
   const [, setLocation] = useLocation();
 
-  const handleStartDrawing = useCallback(() => {
-    // Navigate to doodle page with tablet mode preserved
+  const handleStartDoodleDrawing = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
     const modeParam = params.get("mode");
     if (modeParam === "tablet") {
@@ -113,9 +112,20 @@ export default function HomePage() {
     }
   }, [setLocation]);
 
+  const handleStartDigitDrawing = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get("mode");
+    if (modeParam === "tablet") {
+      setLocation("/digit?mode=tablet");
+    } else {
+      setLocation("/digit");
+    }
+  }, [setLocation]);
+
   const { isConnected } = useWebSocket({
     mode: viewMode,
-    onStartDrawing: handleStartDrawing,
+    onStartDoodleDrawing: handleStartDoodleDrawing,
+    onStartDigitDrawing: handleStartDigitDrawing,
   });
 
   useEffect(() => {
