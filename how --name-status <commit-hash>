@@ -1,0 +1,37 @@
+[33md98bf22[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m final
+[33me542046[m[33m ([m[1;31mgitsafe-backup/main[m[33m)[m Update image classification request to use correct content field
+[33ma612d8b[m Update image classification request format for Vertex AI
+[33mb1a5af0[m Update Vertex AI request format for image classification
+[33m8776dfe[m Add helpful startup logging for AI prediction configuration
+[33md9854c6[m Fix error when checking for Google Cloud credentials file
+[33mfa7304c[m Add validation for Google Cloud credentials file path
+[33m402e470[m Fix incorrect endpoint path for Vertex AI prediction service
+[33m854db7b[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Integrate Google Vertex AI for real-time doodle classification
+[33md57daa1[m Saved your changes before starting work
+[33me0e6a52[m Restored to 'bb019ae34a80e09880600974183f689751ebb33d'
+[33mf9212ba[m Fix Cross-Origin Resource Sharing errors for deployment
+[33me6fd4b4[m Add error diagnostics to help debug blank screen issues
+[33m6c8b97a[m Improve application stability and error handling on mobile devices
+[33m5682682[m Update build process to correctly deploy the application
+[33m95d0a7d[m Update build process to include development dependencies for deployment
+[33m0d87ed9[m Improve deployment by using npx to find and run tsx
+[33mbb019ae[m Update build tools and dependencies for improved deployment compatibility
+[33mcec6961[m Update documentation with deployment and security information
+[33m89b6d8e[m Prepare application for cloud deployment with split frontend and backend
+[33mf538e05[m Fix canvas resizing issues when returning from results screen
+[33mafc2385[m Improve drawing canvas layout and sizing for tablet displays
+[33m5427a31[m Adjust tablet screen detection to include wider displays
+[33mdc86fc8[m Update visual elements and remove unused components
+[33mf6b6d88[m Saved your changes before starting work
+[33ma997a88[m Add a home button to all screens for easy navigation
+[33m3c078f5[m Add educational annotations and visual enhancements to the results display
+[33mffe8881[m Update results display for desktop view with side-by-side layout
+[33m070bd3b[m Remove particle trails and adjust background for mobile design
+[33ma4b65f1[m Enable tablet to switch to drawing canvas when desktop navigates to classifier
+[33me228312[m Add an idle screen for the tablet on the home page
+[33mbee94d1[m Add a beautiful idle screen for the tablet interface
+[33md48bad2[m Saved progress at the end of the loop
+[33m88cf74a[m Enhance application aesthetics with a dark space theme and animations
+[33mbe7f236[m Add real-time AI doodle classification with dual-screen interface
+[33m65d3424[m Extracted stack files
+[33m62e4056[m Initial commit
