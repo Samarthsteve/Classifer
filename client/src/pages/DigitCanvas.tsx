@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
 import { Loader2, Pencil, Eraser, Trash2, Send, Monitor, CheckCircle2, Sparkles, Home } from "lucide-react";
+import DigitVisualization from "./DigitVisualization";
 import type { DrawingPayload, PredictionResult } from "@shared/schema";
 
 interface DigitCanvasProps {
@@ -367,7 +368,7 @@ export default function DigitCanvas({
   }
 
   return (
-    <div className="relative h-screen flex flex-col overflow-hidden" ref={containerRef}>
+    <div className="relative h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" ref={containerRef}>
       <ParticleBackground />
       <ExhibitionHeader />
       
@@ -386,89 +387,30 @@ export default function DigitCanvas({
         </div>
       )}
 
-      <div className="flex-none pt-12 pb-2 px-6 text-center">
+      <div className="flex-none pt-6 pb-2 px-6 text-center">
         <h2 
           className="text-2xl font-bold text-white"
           data-testid="text-drawing-prompt"
         >
           <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Draw
+            Select
           </span>{" "}
-          a digit
+          or send a digit
         </h2>
         <p className="mt-2 text-sm font-medium text-slate-400">
-          Handwrite any digit from 0 to 9
+          Interact with digits to send them for classification
         </p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-4">
-        <div className="relative">
-          <div className="absolute -inset-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl" />
-          <canvas
-            ref={canvasRef}
-            className="relative bg-white rounded-2xl shadow-2xl shadow-black/50 touch-none border-2 border-slate-600/50"
-            style={{ cursor: currentTool === "eraser" ? "cell" : "crosshair" }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-            aria-label="Digit drawing canvas"
-            data-testid="canvas-drawing"
-          />
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <DigitVisualization />
         </div>
       </div>
 
-      <div className="flex-none px-6 pb-8 pt-2">
-        <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
-          <div className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-sm rounded-xl p-1.5 border border-slate-700/50">
-            <button
-              onClick={() => setCurrentTool("pen")}
-              className={`p-3 rounded-lg transition-all duration-200 ${
-                currentTool === "pen"
-                  ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
-              data-testid="button-pen"
-              aria-label="Pen tool"
-            >
-              <Pencil className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setCurrentTool("eraser")}
-              className={`p-3 rounded-lg transition-all duration-200 ${
-                currentTool === "eraser"
-                  ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
-              data-testid="button-eraser"
-              aria-label="Eraser tool"
-            >
-              <Eraser className="w-5 h-5" />
-            </button>
-            <div className="w-px h-8 bg-slate-700 mx-1" />
-            <button
-              onClick={clearCanvas}
-              className="p-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
-              data-testid="button-clear"
-              aria-label="Clear canvas"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <button
-            onClick={handleDone}
-            disabled={!hasDrawn || !isConnected || isProcessing}
-            className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold text-base transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-purple-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
-            data-testid="button-done"
-            aria-label="Submit digit"
-          >
-            <Send className="w-5 h-5" />
-            <span>Classify</span>
-          </button>
+      <div className="flex-none px-6 pb-6 pt-2">
+        <div className="text-center text-xs text-slate-500">
+          <p>Hover or tap digits to interact with the visualization</p>
         </div>
       </div>
 

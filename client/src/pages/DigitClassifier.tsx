@@ -25,6 +25,13 @@ export default function DigitClassifier() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
+  // Open CNN visualization on desktop
+  useEffect(() => {
+    if (viewMode === "desktop") {
+      window.open("https://adamharley.com/nn_vis/cnn/2d.html", "_blank");
+    }
+  }, [viewMode]);
+
   useEffect(() => {
     const handleResize = () => {
       const params = new URLSearchParams(window.location.search);
