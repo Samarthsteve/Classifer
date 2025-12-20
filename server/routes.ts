@@ -5,29 +5,30 @@ import { DOODLE_CLASSES, type DoodleClass, type PredictionResult, drawingSubmiss
 import { existsSync } from "fs";
 import fetch from "node-fetch";
 import { GoogleAuth } from "google-auth-library";
-import { PNG } from "pngjs";
+import sharp from "sharp";
 
-function modelDataToBase64PNG(modelData: number[]): string {
-  const width = 28;
-  const height = 28;
+let lastDisplayImage: string | null = null;
 
-  const png = new PNG({ width, height });
 
-  for (let i = 0; i < modelData.length; i++) {
-    const v = Math.max(0, Math.min(1, modelData[i])); // clamp 0–1
-    const pixel = Math.round(v * 255);
+async function preprocessDisplayImage(displayImage: string): Promise<string> {
+  // Remove data URL prefix
+  const base64 = displayImage.replace(
+    /^data:image\/[a-zA-Z]+;base64,/,
+    ""
+  );
 
-    const idx = i * 4;
-    png.data[idx + 0] = pixel; // R
-    png.data[idx + 1] = pixel; // G
-    png.data[idx + 2] = pixel; // B
-    png.data[idx + 3] = 255;   // A
-  }
+  const buffer = Buffer.from(base64, "base64");
 
-  const buffer = PNG.sync.write(png);
-  return buffer.toString("base64");
+  const processed = await sharp(buffer)
+    // 🔥 CRITICAL STEP: remove transparency
+    .flatten({ background: "#ffffff" }) // canvas bg → solid white
+    // 🔥 Now invert safely
+    .negate()
+    .png()
+    .toBuffer();
+
+  return processed.toString("base64");
 }
-
 
 
 // Store connected clients by mode
@@ -54,8 +55,11 @@ async function vertexPredict(
   console.log("📌 Region:", region);
   console.log("📌 Endpoint:", endpointId);
 
+  lastDisplayImage = displayImage;
+
+
   // Remove data URL prefix
-  const base64Image = modelDataToBase64PNG(_modelData);
+  const base64Image = await preprocessDisplayImage(displayImage);
 
 
   console.log("🖼️ Image base64 length:", base64Image.length);
@@ -230,6 +234,19 @@ export async function registerRoutes(
   } else if (existsSync(credentialsPath)) {
     console.log("✓ Vertex AI configured and ready");
   }
+  app.get("/api/debug-image", async (_req, res) => {
+    if (!lastDisplayImage) {
+      return res.status(400).send("No image yet");
+    }
+
+    const base64 = await preprocessDisplayImage(lastDisplayImage);
+    const buffer = Buffer.from(base64, "base64");
+
+    res.setHeader("Content-Type", "image/png");
+    res.send(buffer);
+  });
+
+
 
   // API endpoint for placeholder training images
   app.get("/api/placeholder/:className/:variant", (req, res) => {
@@ -384,3 +401,4 @@ export async function registerRoutes(
 
   return httpServer;
 }
+
