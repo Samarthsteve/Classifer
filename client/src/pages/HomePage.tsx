@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Pencil, Brain, Sparkles, Monitor } from "lucide-react";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { ExhibitionHeader } from "@/components/ExhibitionHeader";
@@ -122,11 +122,21 @@ export default function HomePage() {
     }
   }, [setLocation]);
 
-  const { isConnected } = useWebSocket({
+  const { isConnected, sendNavigateToDigit, sendNavigateToDoodle } = useWebSocket({
     mode: viewMode,
     onStartDoodleDrawing: handleStartDoodleDrawing,
     onStartDigitDrawing: handleStartDigitDrawing,
   });
+  
+  const handleDesktopDoodleClick = useCallback(() => {
+    sendNavigateToDoodle();
+    handleStartDoodleDrawing();
+  }, [handleStartDoodleDrawing, sendNavigateToDoodle]);
+
+  const handleDesktopDigitClick = useCallback(() => {
+    sendNavigateToDigit();
+    handleStartDigitDrawing();
+  }, [handleStartDigitDrawing, sendNavigateToDigit]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -140,7 +150,6 @@ export default function HomePage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Show tablet idle screen when in tablet mode
   if (viewMode === "tablet") {
     return <TabletHomeIdleScreen isConnected={isConnected} />;
   }
@@ -171,61 +180,59 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
-        <Link href="/doodle">
-          <div 
-            className="group relative min-h-72 p-10 bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:border-blue-500/50 hover:shadow-[0_0_40px_-12px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
-            data-testid="card-doodle-classifier"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-slate-800/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div 
+          onClick={handleDesktopDoodleClick}
+          className="group relative min-h-72 p-10 bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:border-blue-500/50 hover:shadow-[0_0_40px_-12px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
+          data-testid="card-doodle-classifier"
+        >
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-slate-800/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-blue-400/50 transition-all duration-500">
+              <Pencil className="w-10 h-10 text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
+            </div>
             
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-blue-400/50 transition-all duration-500">
-                <Pencil className="w-10 h-10 text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
-              </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-blue-100 transition-colors duration-300">
-                Doodle Classifier
-              </h2>
-              
-              <p className="text-slate-400 text-center text-base md:text-lg group-hover:text-slate-300 transition-colors duration-300">
-                Draw any object and watch AI identify it in real-time
-              </p>
-              
-              <div className="mt-6 px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium text-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg shadow-blue-500/25">
-                Start Drawing
-              </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-blue-100 transition-colors duration-300">
+              Doodle Classifier
+            </h2>
+            
+            <p className="text-slate-400 text-center text-base md:text-lg group-hover:text-slate-300 transition-colors duration-300">
+              Draw any object and watch AI identify it in real-time
+            </p>
+            
+            <div className="mt-6 px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium text-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg shadow-blue-500/25">
+              Start Drawing
             </div>
           </div>
-        </Link>
+        </div>
 
-        <Link href="/digit">
-          <div 
-            className="group relative min-h-72 p-10 bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:border-purple-500/50 hover:shadow-[0_0_40px_-12px_rgba(168,85,247,0.5)] hover:scale-[1.02]"
-            data-testid="card-digit-classifier"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-slate-800/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div 
+          onClick={handleDesktopDigitClick}
+          className="group relative min-h-72 p-10 bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:border-purple-500/50 hover:shadow-[0_0_40px_-12px_rgba(168,85,247,0.5)] hover:scale-[1.02]"
+          data-testid="card-digit-classifier"
+        >
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-slate-800/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-purple-400/50 transition-all duration-500">
+              <Brain className="w-10 h-10 text-purple-400 group-hover:text-purple-300 transition-colors duration-300" />
+            </div>
             
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-purple-400/50 transition-all duration-500">
-                <Brain className="w-10 h-10 text-purple-400 group-hover:text-purple-300 transition-colors duration-300" />
-              </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-purple-100 transition-colors duration-300">
-                Digit Classifier
-              </h2>
-              
-              <p className="text-slate-400 text-center text-base md:text-lg group-hover:text-slate-300 transition-colors duration-300">
-                Draw handwritten digits and watch AI recognize them instantly
-              </p>
-              
-              <div className="mt-6 px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium text-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg shadow-purple-500/25">
-                Start Drawing
-              </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-purple-100 transition-colors duration-300">
+              Digit Classifier
+            </h2>
+            
+            <p className="text-slate-400 text-center text-base md:text-lg group-hover:text-slate-300 transition-colors duration-300">
+              Draw handwritten digits and watch AI recognize them instantly
+            </p>
+            
+            <div className="mt-6 px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium text-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg shadow-purple-500/25">
+              Start Drawing
             </div>
           </div>
-        </Link>
+        </div>
       </div>
     </div>
   );
