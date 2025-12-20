@@ -129,6 +129,12 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
   }, []);
 
+  const sendNavigateToDigit = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "navigate_to_digit" }));
+    }
+  }, []);
+
   const sendNavigateToHome = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: "navigate_to_home" }));
@@ -141,6 +147,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     submitDrawing,
     sendReset,
     sendNavigateToDoodle,
+    sendNavigateToDigit,
     sendNavigateToHome,
   };
 }

@@ -6,12 +6,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
 import DoodleClassifier from "@/pages/DoodleClassifier";
+import DigitClassifier from "@/pages/DigitClassifier";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/doodle" component={DoodleClassifier} />
+      <Route path="/digit" component={DigitClassifier} />
       <Route component={NotFound} />
     </Switch>
   );

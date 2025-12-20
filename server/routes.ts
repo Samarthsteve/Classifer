@@ -371,6 +371,17 @@ export async function registerRoutes(
             });
             break;
 
+          case "navigate_to_digit":
+            // Desktop navigated to digit classifier - notify all tablets to start drawing
+            const startDigitDrawingMessage = JSON.stringify({ type: "start_drawing" });
+            
+            clients.tablet.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(startDigitDrawingMessage);
+              }
+            });
+            break;
+
           case "navigate_to_home":
             // Desktop navigated back to home - notify all tablets
             const goHomeMessage = JSON.stringify({ type: "navigate_to_home" });

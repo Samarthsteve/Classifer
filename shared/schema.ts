@@ -26,6 +26,11 @@ export const DOODLE_CLASSES = [
 
 export type DoodleClass = typeof DOODLE_CLASSES[number];
 
+// Digit Classifier Types
+export const DIGIT_CLASSES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
+
+export type DigitClass = typeof DIGIT_CLASSES[number];
+
 export interface Prediction {
   class: DoodleClass;
   confidence: number;
@@ -74,5 +79,6 @@ export type WebSocketMessage =
   | { type: 'connected'; payload: { mode: string } }
   | { type: 'error'; payload: { message: string } }
   | { type: 'navigate_to_doodle' }
+  | { type: 'navigate_to_digit' }
   | { type: 'navigate_to_home' }
   | { type: 'start_drawing' };
