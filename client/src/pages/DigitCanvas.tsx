@@ -394,7 +394,7 @@ export default function DigitCanvas({
           <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             Draw
           </span>{" "}
-          a digit (0-9)
+          a digit
         </h2>
         <p className="mt-2 text-sm font-medium text-slate-400">
           Handwrite any digit from 0 to 9
