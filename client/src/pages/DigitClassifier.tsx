@@ -72,10 +72,24 @@ export default function DigitClassifier() {
 
   // Notify tablets when tablet enters the digit classifier
   useEffect(() => {
-    if (viewMode === "tablet" && isConnected) {
-      sendNavigateToDigit();
+    if (viewMode === "tablet") {
+      if (isConnected) {
+        sendNavigateToDigit();
+      }
     }
   }, [viewMode, isConnected, sendNavigateToDigit]);
+  
+  // Retry sending message if not connected initially
+  useEffect(() => {
+    if (viewMode === "tablet" && !isConnected && isReconnecting) {
+      const timer = setTimeout(() => {
+        if (isConnected) {
+          sendNavigateToDigit();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, isConnected, isReconnecting, sendNavigateToDigit]);
 
   // Only show component on tablet, desktop will redirect
   if (viewMode === "desktop") {

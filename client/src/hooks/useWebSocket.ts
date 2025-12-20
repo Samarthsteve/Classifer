@@ -138,9 +138,15 @@ export function useWebSocket(options: UseWebSocketOptions) {
   }, []);
 
   const sendNavigateToDigit = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: "navigate_to_digit" }));
-    }
+    const attemptSend = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: "navigate_to_digit" }));
+      } else {
+        // Retry after a short delay if not ready
+        setTimeout(attemptSend, 100);
+      }
+    };
+    attemptSend();
   }, []);
 
   const sendNavigateToHome = useCallback(() => {
