@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import DigitCanvas from "./DigitCanvas";
-import ResultsDisplay from "./ResultsDisplay";
+import DigitEducational from "./DigitEducational";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 import type { PredictionResult, DrawingPayload } from "@shared/schema";
@@ -64,9 +63,16 @@ export default function DigitClassifier() {
     onError: handleError,
   });
 
+  // Navigate desktop to CNN visualization link
+  useEffect(() => {
+    if (viewMode === "desktop") {
+      window.location.href = "https://adamharley.com/nn_vis/cnn/2d.html";
+    }
+  }, [viewMode]);
+
   // Notify tablets when desktop enters the digit classifier
   useEffect(() => {
-    if (viewMode === "desktop" && isConnected) {
+    if (viewMode === "tablet" && isConnected) {
       sendNavigateToDigit();
     }
   }, [viewMode, isConnected, sendNavigateToDigit]);
@@ -81,25 +87,6 @@ export default function DigitClassifier() {
     sendReset();
   }, [sendReset]);
 
-  if (viewMode === "tablet") {
-    return (
-      <DigitCanvas
-        onSubmit={handleSubmit}
-        isProcessing={isProcessing}
-        isConnected={isConnected}
-        isReconnecting={isReconnecting}
-        hasResult={result !== null}
-        result={result}
-      />
-    );
-  }
-
-  return (
-    <ResultsDisplay
-      result={result}
-      onReset={handleReset}
-      isConnected={isConnected}
-      isReconnecting={isReconnecting}
-    />
-  );
+  // Desktop navigates away, only tablet shows educational content
+  return <DigitEducational />;
 }
